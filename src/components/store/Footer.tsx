@@ -87,6 +87,17 @@ export function Footer({ whatsappNumber, instagram }: FooterProps) {
           <span>&copy; {year} Doce pote</span>
           <span className="font-script text-xl">Un potecito de cariño a la vez</span>
         </div>
+
+        {/* Firma del autor, en la manuscrita de la marca — como quien firma
+            a mano el empaque antes de entregarlo. */}
+        <p className="mt-7 flex items-center justify-center gap-2 text-[0.78rem] text-ink-soft/75">
+          <span className="h-px w-8 bg-kraft-line/60" aria-hidden />
+          Hecho por
+          <span className="font-script text-[1.4rem] leading-none text-green-deep">
+            jesu.dev
+          </span>
+          <span className="h-px w-8 bg-kraft-line/60" aria-hidden />
+        </p>
       </div>
     </footer>
   );
