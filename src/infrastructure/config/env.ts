@@ -42,22 +42,35 @@ const schema = z.object({
 
 export type AppConfig = z.infer<typeof schema>;
 
+/**
+ * En blanco cuenta como ausente.
+ *
+ * Zod aplica `.default()` solo cuando el valor es `undefined`, no cuando es
+ * `""`. En un panel como el de Vercel es muy fácil crear una variable y
+ * dejarla vacía; sin esto, esa cadena vacía pasaría la validación y llegaría
+ * al código como si fuera un valor real.
+ */
+function present(value: string | undefined): string | undefined {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : undefined;
+}
+
 function load(): AppConfig {
   const parsed = schema.safeParse({
     NODE_ENV: process.env.NODE_ENV,
-    DATABASE_URL: process.env.DATABASE_URL,
-    SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-    WHATSAPP_NUMBER: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
-    INSTAGRAM: process.env.NEXT_PUBLIC_INSTAGRAM,
-    PAYMENT_GATEWAY: process.env.PAYMENT_GATEWAY,
-    WOMPI_PUBLIC_KEY: process.env.WOMPI_PUBLIC_KEY,
-    WOMPI_PRIVATE_KEY: process.env.WOMPI_PRIVATE_KEY,
-    WOMPI_INTEGRITY_SECRET: process.env.WOMPI_INTEGRITY_SECRET,
-    WOMPI_EVENTS_SECRET: process.env.WOMPI_EVENTS_SECRET,
-    WOMPI_ENVIRONMENT: process.env.WOMPI_ENVIRONMENT,
-    DELIVERY_FEE_COP: process.env.DELIVERY_FEE_COP,
-    FREE_DELIVERY_THRESHOLD_COP: process.env.FREE_DELIVERY_THRESHOLD_COP,
-    SESSION_SECRET: process.env.SESSION_SECRET,
+    DATABASE_URL: present(process.env.DATABASE_URL),
+    SITE_URL: present(process.env.NEXT_PUBLIC_SITE_URL),
+    WHATSAPP_NUMBER: present(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER),
+    INSTAGRAM: present(process.env.NEXT_PUBLIC_INSTAGRAM),
+    PAYMENT_GATEWAY: present(process.env.PAYMENT_GATEWAY),
+    WOMPI_PUBLIC_KEY: present(process.env.WOMPI_PUBLIC_KEY),
+    WOMPI_PRIVATE_KEY: present(process.env.WOMPI_PRIVATE_KEY),
+    WOMPI_INTEGRITY_SECRET: present(process.env.WOMPI_INTEGRITY_SECRET),
+    WOMPI_EVENTS_SECRET: present(process.env.WOMPI_EVENTS_SECRET),
+    WOMPI_ENVIRONMENT: present(process.env.WOMPI_ENVIRONMENT),
+    DELIVERY_FEE_COP: present(process.env.DELIVERY_FEE_COP),
+    FREE_DELIVERY_THRESHOLD_COP: present(process.env.FREE_DELIVERY_THRESHOLD_COP),
+    SESSION_SECRET: present(process.env.SESSION_SECRET),
   });
 
   if (!parsed.success) {
