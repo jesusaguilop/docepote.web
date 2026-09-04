@@ -179,8 +179,8 @@ tests/                       dominio y casos de uso, sin BD
 
 ## Migrar a Postgres
 
-1. En `prisma/schema.prisma`, cambia `provider = "sqlite"` por `"postgresql"`.
-2. Pon la `DATABASE_URL` de Neon/Supabase en el `.env`.
+1. Corre `npm run db:use-postgres` (ajusta el provider y agrega `directUrl`).
+2. Pon la `DATABASE_URL` y la `DIRECT_URL` de Neon en el `.env`.
 3. `npx prisma db push && npm run db:seed`.
 
 El esquema se diseñó compatible a propósito: no usa enums nativos ni arrays,

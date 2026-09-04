@@ -9,14 +9,14 @@ checkout y panel de administración.
 Necesitas Node 20 o superior.
 
 El repositorio viene configurado para **PostgreSQL**, que es lo que usa el
-despliegue en Vercel + Supabase. Elige cómo quieres trabajar en local:
+despliegue en Vercel + Neon. Elige cómo quieres trabajar en local:
 
-### Opción A — apuntando a Supabase (lo mismo que producción)
+### Opción A — apuntando a Neon (lo mismo que producción)
 
 ```bash
 npm install
 cp .env.example .env
-# pon DATABASE_URL y DIRECT_URL de tu proyecto de Supabase en el .env
+# pon DATABASE_URL y DIRECT_URL de tu proyecto de Neon en el .env
 npm run setup             # genera el cliente, crea las tablas y siembra
 npm run dev
 ```
@@ -61,7 +61,7 @@ hola@docepote.com / docepote2026
 | `npm run db:seed`   | Recargar el catálogo (respeta stock y visibilidad)   |
 | `npm run db:studio` | Explorar la base de datos en el navegador            |
 | `npm run db:reset`  | Borrar todo y volver a sembrar                       |
-| `npm run db:use-postgres` | Configurar el esquema para Supabase/Postgres   |
+| `npm run db:use-postgres` | Configurar el esquema para Neon/Postgres       |
 | `npm run db:use-sqlite`   | Configurar el esquema para SQLite local        |
 
 ## Qué incluye
@@ -129,7 +129,7 @@ intente pagar.
 Next.js 15 (App Router) · TypeScript estricto · Prisma (PostgreSQL en
 producción, SQLite en local) · Tailwind v4 · Motion · Vitest.
 
-Desplegado en Vercel con Supabase.
+Desplegado en Vercel con Neon.
 
 La organización del código y el porqué de cada decisión están en
 [`ARCHITECTURE.md`](./ARCHITECTURE.md).
