@@ -1,0 +1,164 @@
+// ─────────────────────────────────────────────────────────────────────────
+//  Doce pote — esquema de datos
+//
+//  Motor: SQLite (cero configuración local).
+//  Para pasar a Postgres solo cambia `provider = "postgresql"` y la
+//  DATABASE_URL: el esquema se mantiene compatible a propósito — no usa
+//  enums nativos ni arrays, que SQLite no soporta. Los valores acotados
+//  (categoría, estado, patrón) se validan en el dominio, que es donde
+//  deben vivir esas reglas.
+//
+//  Dinero: todos los montos son enteros en pesos colombianos. El COP no usa
+//  centavos, así que no hay decimales en ningún campo monetario.
+// ─────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+/// Un sabor de la casa. Vive en su propia tabla porque el mismo sabor aparece
+/// en varios productos (individual, mini y el kit de eventos): duplicar su
+/// descripción en cada uno garantizaría que tarde o temprano difieran.
+model Flavor {
+  id          String  @id
+  slug        String  @unique
+  name        String
+  /// Emoji con el que la marca identifica el sabor: 🍫, 💚, 🖤…
+  emoji       String  @default("")
+  /// Una línea, la que se muestra en la tarjeta.
+  summary     String
+  /// Qué lleva por dentro, capa por capa. null si no está documentado.
+  composition String?
+  position    Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products Product[]
+
+  @@index([position])
+}
+
+model Product {
+  id          String  @id
+  slug        String  @unique
+  name        String
+  description String
+  /// Precio vigente, en pesos colombianos (entero, sin decimales).
+  price       Int
+  /// Precio anterior tachado. null cuando no hay oferta. Siempre > price.
+  previousPrice Int?
+  /// "individual" | "mini" | "combo" | "eventos" — validado por parseCategory().
+  category    String
+  /// Sabor de la casa. null en combos y kits, que llevan varios.
+  flavorId    String?
+  /// Etiqueta opcional de la tarjeta: "Más pedido", "Nuevo", "Temporada".
+  badge       String?
+  /// Color del contenido del pote, en hexadecimal.
+  fillColor   String
+  /// "wave" | "dots" | "drop" — patrón dibujado sobre el pote.
+  pattern     String
+  imageUrl    String?
+  /// Tamaño del pote en onzas. null si no aplica.
+  sizeOz      Float?
+  /// Cuántos potes trae. null para productos de una sola unidad.
+  units       Int?
+  active      Boolean @default(true)
+  /// null = se hace por encargo, sin control de inventario.
+  stock       Int?
+  /// Orden manual en la grilla del catálogo.
+  position    Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  flavor     Flavor?     @relation(fields: [flavorId], references: [id], onDelete: SetNull)
+  orderLines OrderLine[]
+
+  @@index([category, active])
+  @@index([flavorId])
+  @@index([position])
+}
+
+model Order {
+  id     String @id
+  /// Código legible que el cliente dicta por WhatsApp: "DP-7K2M".
+  code   String @unique
+  /// pending | confirmed | preparing | ready | delivered | cancelled
+  status String @default("pending")
+
+  customerName    String
+  /// Celular en E.164 sin "+": 573180173770.
+  customerPhone   String
+  customerAddress String?
+  customerNotes   String?
+
+  /// "pickup" | "delivery"
+  fulfillmentMethod String
+  /// Costo de domicilio congelado al momento del pedido.
+  deliveryFee       Int    @default(0)
+
+  /// "whatsapp" | "wompi"
+  paymentMethod    String  @default("whatsapp")
+  /// Id de transacción devuelto por la pasarela, si aplica.
+  paymentReference String?
+
+  placedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lines OrderLine[]
+
+  @@index([status, placedAt])
+  @@index([placedAt])
+  @@index([customerPhone])
+}
+
+/// Foto del producto al momento de la compra: si el precio cambia después,
+/// el pedido histórico sigue mostrando lo que el cliente realmente pagó.
+model OrderLine {
+  id        String @id
+  orderId   String
+  productId String
+
+  productName String
+  productSlug String
+  unitPrice   Int
+  quantity    Int
+  fillColor   String
+  pattern     String
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model AdminUser {
+  id           String   @id
+  email        String   @unique
+  name         String
+  /// Formato: scrypt$<salt hex>$<hash hex>. Nunca la contraseña en claro.
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  sessions Session[]
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user AdminUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
