@@ -32,7 +32,7 @@ export function Sidebar({ adminName, adminEmail }: { adminName: string; adminEma
 
   return (
     <aside className="z-20 flex shrink-0 flex-col bg-ink text-paper lg:h-dvh lg:w-64 lg:sticky lg:top-0">
-      <div className="flex items-center gap-3 px-5 py-5 lg:px-6 lg:py-6">
+      <div className="flex items-center gap-3 px-5 py-4 lg:px-6 lg:py-6">
         <Image
           src="/brand/logo-mascot.jpg"
           alt=""
@@ -40,13 +40,35 @@ export function Sidebar({ adminName, adminEmail }: { adminName: string; adminEma
           height={72}
           className="h-9 w-9 shrink-0 rounded-full ring-2 ring-paper/20"
         />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="truncate font-display text-[0.98rem] font-bold leading-tight">
             Doce pote
           </p>
           <p className="text-[0.74rem] uppercase tracking-wider text-paper/45">
             Panel de control
           </p>
+        </div>
+
+        {/* En móvil el pie de la barra no se muestra, así que salir y volver a
+            la tienda tienen que estar aquí o no existen. */}
+        <div className="flex items-center gap-1 lg:hidden">
+          <Link
+            href="/"
+            className="flex h-10 w-10 items-center justify-center rounded-full text-paper/60 transition-colors active:bg-paper/10"
+            aria-label="Ver la tienda"
+          >
+            <StoreIcon className="h-[19px] w-[19px]" />
+          </Link>
+
+          <form action={logout}>
+            <button
+              type="submit"
+              className="flex h-10 w-10 items-center justify-center rounded-full text-paper/60 transition-colors active:bg-paper/10"
+              aria-label="Cerrar sesión"
+            >
+              <LogoutIcon className="h-[19px] w-[19px]" />
+            </button>
+          </form>
         </div>
       </div>
 

@@ -134,7 +134,7 @@ export default async function HomePage() {
               href={`https://wa.me/${config.WHATSAPP_NUMBER}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="self-center font-display font-semibold text-ink-soft underline underline-offset-4 transition-colors hover:text-ink"
+              className="inline-flex min-h-11 items-center self-center font-display font-semibold text-ink-soft underline underline-offset-4 transition-colors hover:text-ink"
             >
               Escríbenos
             </Link>

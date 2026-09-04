@@ -36,12 +36,12 @@ export function Footer({ whatsappNumber, instagram }: FooterProps) {
             >
               Explorar
             </h2>
-            <ul className="mt-4 space-y-2.5 text-[0.9rem]">
+            <ul className="mt-2 text-[0.9rem]">
               {EXPLORE_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-ink-soft transition-colors hover:text-green-deep"
+                    className="inline-flex min-h-9 items-center text-ink-soft transition-colors hover:text-green-deep"
                   >
                     {link.label}
                   </Link>
@@ -57,13 +57,13 @@ export function Footer({ whatsappNumber, instagram }: FooterProps) {
             >
               Contacto
             </h2>
-            <ul className="mt-4 space-y-2.5 text-[0.9rem]">
+            <ul className="mt-2 text-[0.9rem]">
               <li>
                 <a
                   href={`https://wa.me/${whatsappNumber}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-ink-soft transition-colors hover:text-green-deep"
+                  className="inline-flex min-h-9 items-center text-ink-soft transition-colors hover:text-green-deep"
                 >
                   WhatsApp
                 </a>
@@ -73,12 +73,12 @@ export function Footer({ whatsappNumber, instagram }: FooterProps) {
                   href={`https://instagram.com/${instagram}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-ink-soft transition-colors hover:text-green-deep"
+                  className="inline-flex min-h-9 items-center text-ink-soft transition-colors hover:text-green-deep"
                 >
                   @{instagram}
                 </a>
               </li>
-              <li className="text-ink-soft">Valledupar, Colombia</li>
+              <li className="flex min-h-9 items-center text-ink-soft">Valledupar, Colombia</li>
             </ul>
           </nav>
         </div>

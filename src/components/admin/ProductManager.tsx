@@ -122,7 +122,14 @@ export function ProductManager({
                 : 'border-dashed border-kraft-line/70 bg-paper-2/30',
             )}
           >
-            <div className="flex flex-wrap items-center gap-4">
+            {/*
+              En móvil va en dos filas: arriba el pote y su información, abajo
+              los controles repartidos a lo ancho. Antes todo iba en una sola
+              línea con `flex-wrap` y en pantalla angosta el nombre, el stock y
+              los tres botones se enredaban en un orden distinto en cada fila.
+            */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+              <div className="flex items-center gap-4 sm:contents">
               <div className="h-12 w-12 shrink-0 rounded bg-paper-2 p-1">
                 <JarIcon fillColor={product.art.fillColor} pattern={product.art.pattern} />
               </div>
@@ -156,7 +163,9 @@ export function ProductManager({
                   )}
                 </p>
               </div>
+              </div>
 
+              <div className="flex flex-wrap items-center justify-between gap-2 sm:contents">
               <StockControl product={product} onChange={handleStock} disabled={isPending} />
 
               <div className="flex items-center gap-2">
@@ -190,6 +199,7 @@ export function ProductManager({
                 >
                   ✕
                 </button>
+              </div>
               </div>
             </div>
 

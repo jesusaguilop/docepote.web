@@ -32,7 +32,7 @@ export function AddToCartButton({
     return (
       <span
         className={cn(
-          'inline-flex items-center justify-center rounded-sm border border-dashed border-kraft-line px-4 py-2 font-display text-[0.86rem] font-semibold text-ink-soft',
+          'inline-flex min-h-11 items-center justify-center rounded-sm border border-dashed border-kraft-line px-4 py-2 font-display text-[0.86rem] font-semibold text-ink-soft',
           layout === 'full' && 'w-full py-3.5 text-[0.98rem]',
         )}
       >
@@ -59,7 +59,11 @@ export function AddToCartButton({
       className={cn(
         'relative inline-flex items-center justify-center overflow-hidden rounded-sm font-display font-semibold transition-colors duration-200',
         justAdded ? 'bg-green-deep text-white' : 'bg-ink text-paper hover:bg-[#100b06]',
-        layout === 'full' ? 'w-full py-3.5 text-[0.98rem]' : 'px-4 py-2 text-[0.86rem]',
+        // 44px de alto mínimo: es el botón más pulsado de la tienda y en
+        // celular 34px se falla con el pulgar.
+        layout === 'full'
+          ? 'w-full py-3.5 text-[0.98rem]'
+          : 'min-h-11 px-4 py-2 text-[0.86rem]',
       )}
       aria-label={`Agregar ${product.name} al carrito`}
     >

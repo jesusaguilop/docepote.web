@@ -16,7 +16,9 @@ export function QuantityStepper({ value, max, onChange, size = 'sm' }: QuantityS
   const ceiling = Math.min(max ?? MAX_QUANTITY_PER_LINE, MAX_QUANTITY_PER_LINE);
   const canIncrease = value < ceiling;
 
-  const dimension = size === 'sm' ? 'h-7 w-7 text-base' : 'h-9 w-9 text-lg';
+  // Objetivos táctiles: 36px en el carrito y 44px en la ficha de producto.
+  // Por debajo de eso, en celular se falla el toque constantemente.
+  const dimension = size === 'sm' ? 'h-9 w-9 text-base' : 'h-11 w-11 text-lg';
 
   return (
     <div className="inline-flex items-center gap-1 rounded-full border border-kraft-line bg-paper p-0.5">

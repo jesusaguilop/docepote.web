@@ -134,8 +134,15 @@ export function CheckoutForm() {
     return <EmptyCheckout />;
   }
 
+  const submitDisabled = isSubmitting || !summary || summary.hasBlockingIssues;
+
   return (
-    <form onSubmit={handleSubmit} className="grid items-start gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+    <form
+      onSubmit={handleSubmit}
+      /* El padding inferior en móvil deja sitio para la barra fija de abajo;
+         sin él, el botón tapa las notas del pedido. */
+      className="grid items-start gap-12 pb-28 lg:grid-cols-[1.1fr_0.9fr] lg:pb-0"
+    >
       <div className="space-y-10">
         {/* ── Entrega ─────────────────────────────────────────────────── */}
         <fieldset>
@@ -321,7 +328,7 @@ export function CheckoutForm() {
             </div>
           )}
 
-          <div className="border-t border-kraft-line/60 px-6 py-5">
+          <div className="hidden border-t border-kraft-line/60 px-6 py-5 lg:block">
             {formError && (
               <motion.p
                 initial={{ opacity: 0, y: -6 }}
@@ -333,12 +340,7 @@ export function CheckoutForm() {
               </motion.p>
             )}
 
-            <Button
-              type="submit"
-              variant="green"
-              className="w-full"
-              disabled={isSubmitting || !summary || summary.hasBlockingIssues}
-            >
+            <Button type="submit" variant="green" className="w-full" disabled={submitDisabled}>
               {isSubmitting ? 'Confirmando...' : 'Confirmar pedido'}
             </Button>
 
@@ -348,6 +350,44 @@ export function CheckoutForm() {
           </div>
         </div>
       </aside>
+
+      {/*
+        Barra fija de confirmación, solo en móvil y tablet.
+
+        En pantallas angostas el resumen queda debajo del formulario, así que
+        el cliente llenaba sus datos sin ver nunca el total ni el botón. Aquí
+        los tiene siempre a la vista, con el área segura del iPhone respetada.
+      */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-kraft-line bg-paper/95 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md lg:hidden">
+        {formError && (
+          <motion.p
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-2.5 rounded bg-berry/10 px-3 py-2 text-[0.82rem] text-berry"
+            role="alert"
+          >
+            {formError}
+          </motion.p>
+        )}
+
+        <div className="flex items-center gap-3">
+          <div className="min-w-0 shrink-0">
+            <p className="text-[0.72rem] uppercase tracking-wide text-ink-soft">Total</p>
+            <p className="font-display text-[1.25rem] font-bold leading-tight tabular-nums">
+              {summary?.totalFormatted ?? '—'}
+            </p>
+          </div>
+
+          <Button
+            type="submit"
+            variant="green"
+            className="h-12 flex-1"
+            disabled={submitDisabled}
+          >
+            {isSubmitting ? 'Confirmando...' : 'Confirmar pedido'}
+          </Button>
+        </div>
+      </div>
     </form>
   );
 }

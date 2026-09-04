@@ -18,7 +18,7 @@ export default function StoreLayout({ children }: { children: React.ReactNode })
     <CartProvider>
       <ToastProvider>
         <div className="flex min-h-dvh flex-col">
-          <Header />
+          <Header whatsappNumber={config.WHATSAPP_NUMBER} />
           <main className="flex-1">{children}</main>
           <Footer
             whatsappNumber={config.WHATSAPP_NUMBER}
