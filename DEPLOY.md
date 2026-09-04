@@ -81,17 +81,17 @@ Verifica en Neon → **Tables** que aparezcan `Product`, `Flavor`, `Order`,
 2. Vercel detecta Next.js solo. No cambies nada del build.
 3. En **Environment Variables**, agrega:
 
-   | Variable                      | Valor                                       |
-   | ----------------------------- | ------------------------------------------- |
-   | `DATABASE_URL`                | La del pooler (con `-pooler` en el host)     |
-   | `DIRECT_URL`                  | La directa (sin `-pooler`)                   |
-   | `NEXT_PUBLIC_SITE_URL`        | `https://tu-dominio.vercel.app`              |
-   | `NEXT_PUBLIC_WHATSAPP_NUMBER` | `573180173770`                               |
-   | `NEXT_PUBLIC_INSTAGRAM`       | `docepotevup`                                |
-   | `SESSION_SECRET`              | Algo largo y aleatorio (ver abajo)           |
-   | `PAYMENT_GATEWAY`             | `whatsapp`                                   |
-   | `DELIVERY_FEE_COP`            | `5000`                                       |
-   | `FREE_DELIVERY_THRESHOLD_COP` | `60000`                                      |
+   | Variable                      | Valor                                      |
+   | ----------------------------- | ------------------------------------------ |
+   | `DATABASE_URL`                | La del pooler (con `-pooler` en el host)   |
+   | `DIRECT_URL`                  | La directa (sin `-pooler`)                 |
+   | `SESSION_SECRET`              | Algo largo y aleatorio (ver abajo)         |
+   | `WHATSAPP_NUMBER`             | `573180173770`                             |
+   | `INSTAGRAM`                   | `docepotevup`                              |
+   | `PAYMENT_GATEWAY`             | `whatsapp`                                 |
+   | `DELIVERY_FEE_COP`            | `5000`                                     |
+   | `FREE_DELIVERY_THRESHOLD_COP` | `60000`                                    |
+   | `SITE_URL`                    | Opcional — ver la nota de abajo            |
 
    Para el secreto de sesión:
 
@@ -100,6 +100,16 @@ Verifica en Neon → **Tables** que aparezcan `Product`, `Flavor`, `Order`,
    ```
 
 4. **Deploy**.
+
+**Sobre `SITE_URL`:** puedes dejarla sin poner. Si falta, se detecta sola con
+el dominio de producción que Vercel expone en `VERCEL_PROJECT_PRODUCTION_URL`.
+Conviene fijarla a mano solo cuando tengas dominio propio.
+
+**Ninguna variable lleva prefijo `NEXT_PUBLIC_`**, y es a propósito: todas se
+leen en el servidor y bajan a los componentes como props, así que no viajan al
+navegador. De paso se leen en ejecución y no al compilar — cambiar el número de
+WhatsApp no obliga a recompilar. Si Vercel te sugiere quitar el prefijo público
+de alguna variable, ya está quitado.
 
 El `build` del proyecto ya corre `prisma generate` antes de compilar, así que
 el cliente se genera con el esquema correcto en cada despliegue.
@@ -111,7 +121,7 @@ el cliente se genera con el esquema correcto en cada despliegue.
 
 ## 4. Después del primer despliegue
 
-1. Vuelve a Vercel y corrige `NEXT_PUBLIC_SITE_URL` con el dominio real que te
+1. Vuelve a Vercel y corrige `SITE_URL` con el dominio real que te
    asignó. Redespliega. *(Importa: es la URL de seguimiento que va dentro del
    mensaje de WhatsApp de cada pedido. Si queda en `localhost`, tus clientes
    reciben un enlace muerto.)*

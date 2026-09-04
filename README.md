@@ -114,7 +114,7 @@ Todo se controla desde el `.env` (ver `.env.example`). Lo más útil:
 
 | Variable                      | Para qué                                    |
 | ----------------------------- | ------------------------------------------- |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Número que recibe los pedidos               |
+| `WHATSAPP_NUMBER` | Número que recibe los pedidos               |
 | `DELIVERY_FEE_COP`            | Costo del domicilio                         |
 | `FREE_DELIVERY_THRESHOLD_COP` | Desde cuánto el domicilio va gratis         |
 | `PAYMENT_GATEWAY`             | `whatsapp` o `wompi`                        |

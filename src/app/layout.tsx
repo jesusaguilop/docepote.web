@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { fontVariables } from '@/lib/fonts';
+import { resolveSiteUrl } from '@/lib/site-url';
 import './globals.css';
 
 /**
@@ -10,28 +11,19 @@ import './globals.css';
  * administración es otro mundo y no debe heredarlos.
  */
 
-/**
- * URL base del sitio, tolerante a configuraciones a medias.
- *
- * Se usa `||` y no `??` a propósito: en Vercel es muy fácil crear la variable
- * y dejarla en blanco, y `'' ?? algo` devuelve la cadena vacía — con la que
- * `new URL('')` lanza y tumba el build entero. Si además viene con un valor
- * inválido, se cae al dominio local en vez de romper la compilación.
- */
-function resolveSiteUrl(): URL {
-  const fallback = 'http://localhost:3000';
-  const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim() || fallback;
-
+/** Cae al dominio local si lo configurado no es una URL válida, en vez de romper el build. */
+function metadataBaseUrl(): URL {
+  const candidate = resolveSiteUrl();
   try {
-    return new URL(raw);
+    return new URL(candidate);
   } catch {
-    console.warn(`[metadata] NEXT_PUBLIC_SITE_URL no es una URL válida ("${raw}"); se usa ${fallback}.`);
-    return new URL(fallback);
+    console.warn(`[metadata] "${candidate}" no es una URL válida; se usa http://localhost:3000.`);
+    return new URL('http://localhost:3000');
   }
 }
 
 export const metadata: Metadata = {
-  metadataBase: resolveSiteUrl(),
+  metadataBase: metadataBaseUrl(),
   title: {
     default: 'Doce pote — Postres artesanales en pote | Valledupar',
     template: '%s · Doce pote',

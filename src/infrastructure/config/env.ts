@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod';
+import { firstPresent, resolveSiteUrl } from '@/lib/site-url';
 
 const intFromString = (fallback: number) =>
   z
@@ -50,18 +51,21 @@ export type AppConfig = z.infer<typeof schema>;
  * dejarla vacía; sin esto, esa cadena vacía pasaría la validación y llegaría
  * al código como si fuera un valor real.
  */
-function present(value: string | undefined): string | undefined {
-  const trimmed = value?.trim();
-  return trimmed ? trimmed : undefined;
-}
+const present = firstPresent;
 
 function load(): AppConfig {
   const parsed = schema.safeParse({
     NODE_ENV: process.env.NODE_ENV,
     DATABASE_URL: present(process.env.DATABASE_URL),
-    SITE_URL: present(process.env.NEXT_PUBLIC_SITE_URL),
-    WHATSAPP_NUMBER: present(process.env.NEXT_PUBLIC_WHATSAPP_NUMBER),
-    INSTAGRAM: present(process.env.NEXT_PUBLIC_INSTAGRAM),
+    // Detecta el dominio de Vercel si nadie configuró la variable.
+    SITE_URL: resolveSiteUrl(),
+    // Nombre nuevo primero; el `NEXT_PUBLIC_*` queda como respaldo para no
+    // romper despliegues que aún lo tengan configurado con el nombre viejo.
+    WHATSAPP_NUMBER: present(
+      process.env.WHATSAPP_NUMBER,
+      process.env.NEXT_PUBLIC_WHATSAPP_NUMBER,
+    ),
+    INSTAGRAM: present(process.env.INSTAGRAM, process.env.NEXT_PUBLIC_INSTAGRAM),
     PAYMENT_GATEWAY: present(process.env.PAYMENT_GATEWAY),
     WOMPI_PUBLIC_KEY: present(process.env.WOMPI_PUBLIC_KEY),
     WOMPI_PRIVATE_KEY: present(process.env.WOMPI_PRIVATE_KEY),
