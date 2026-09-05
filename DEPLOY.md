@@ -79,31 +79,33 @@ Verifica en Neon → **Tables** que aparezcan `Product`, `Flavor`, `Order`,
 1. Entra a [vercel.com/new](https://vercel.com/new) e importa el repositorio
    `jesusaguilop/docepote.web`.
 2. Vercel detecta Next.js solo. No cambies nada del build.
-3. En **Environment Variables**, agrega:
+3. En **Environment Variables**, la única imprescindible es:
 
-   | Variable                      | Valor                                      |
-   | ----------------------------- | ------------------------------------------ |
-   | `DATABASE_URL`                | La del pooler (con `-pooler` en el host)   |
-   | `DIRECT_URL`                  | La directa (sin `-pooler`)                 |
-   | `SESSION_SECRET`              | Algo largo y aleatorio (ver abajo)         |
-   | `WHATSAPP_NUMBER`             | `573180173770`                             |
-   | `INSTAGRAM`                   | `docepotevup`                              |
-   | `PAYMENT_GATEWAY`             | `whatsapp`                                 |
-   | `DELIVERY_FEE_COP`            | `5000`                                     |
-   | `FREE_DELIVERY_THRESHOLD_COP` | `60000`                                    |
-   | `SITE_URL`                    | Opcional — ver la nota de abajo            |
+   | Variable       | Valor                                    |
+   | -------------- | ---------------------------------------- |
+   | `DATABASE_URL` | La del pooler (con `-pooler` en el host)  |
 
-   Para el secreto de sesión:
+   `DIRECT_URL` **no hace falta en Vercel**: solo la usa Prisma para crear y
+   migrar tablas desde tu máquina. En el despliegue únicamente corre
+   `prisma generate`, que no la necesita.
 
-   ```bash
-   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-   ```
+   Las demás son opcionales — todas tienen valor por defecto. Ponlas solo si
+   quieres cambiar algo:
+
+   | Variable                      | Por defecto      | Para qué                    |
+   | ----------------------------- | ---------------- | --------------------------- |
+   | `SITE_URL`                    | dominio de Vercel | Fíjala con dominio propio   |
+   | `WHATSAPP_NUMBER`             | `573180173770`   | Quién recibe los pedidos    |
+   | `INSTAGRAM`                   | `docepotevup`    | Enlace del pie              |
+   | `DELIVERY_FEE_COP`            | `5000`           | Costo del domicilio         |
+   | `FREE_DELIVERY_THRESHOLD_COP` | `60000`          | Desde cuánto va gratis      |
+   | `PAYMENT_GATEWAY`             | `whatsapp`       | Ver la sección de Wompi     |
+
+   Si dejas alguna vacía o mal escrita, la tienda **no se cae**: usa el valor
+   por defecto y lo avisa en los logs. Solo `DATABASE_URL` puede detenerla,
+   porque sin base de datos no hay catálogo que servir.
 
 4. **Deploy**.
-
-**Sobre `SITE_URL`:** puedes dejarla sin poner. Si falta, se detecta sola con
-el dominio de producción que Vercel expone en `VERCEL_PROJECT_PRODUCTION_URL`.
-Conviene fijarla a mano solo cuando tengas dominio propio.
 
 **Ninguna variable lleva prefijo `NEXT_PUBLIC_`**, y es a propósito: todas se
 leen en el servidor y bajan a los componentes como props, así que no viajan al
@@ -121,11 +123,7 @@ el cliente se genera con el esquema correcto en cada despliegue.
 
 ## 4. Después del primer despliegue
 
-1. Vuelve a Vercel y corrige `SITE_URL` con el dominio real que te
-   asignó. Redespliega. *(Importa: es la URL de seguimiento que va dentro del
-   mensaje de WhatsApp de cada pedido. Si queda en `localhost`, tus clientes
-   reciben un enlace muerto.)*
-2. Entra a `https://tu-dominio.vercel.app/admin` y **cambia la contraseña del
+1. Entra a `https://tu-dominio.vercel.app/admin` y **cambia la contraseña del
    administrador**. Las credenciales del seed son públicas — están en este
    repositorio.
 
@@ -133,6 +131,10 @@ el cliente se genera con el esquema correcto en cada despliegue.
    (apuntando a Neon) y corre `npm run db:seed`. Si el correo ya existe el seed
    no lo toca, así que usa un correo distinto o borra el usuario anterior desde
    la consola de Neon.
+
+2. El enlace de seguimiento que va dentro del mensaje de WhatsApp usa el
+   dominio detectado automáticamente, así que ya apunta bien. Solo tendrás que
+   fijar `SITE_URL` el día que conectes un dominio propio.
 
 ---
 

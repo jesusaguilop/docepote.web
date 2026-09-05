@@ -118,7 +118,6 @@ Todo se controla desde el `.env` (ver `.env.example`). Lo más útil:
 | `DELIVERY_FEE_COP`            | Costo del domicilio                         |
 | `FREE_DELIVERY_THRESHOLD_COP` | Desde cuánto el domicilio va gratis         |
 | `PAYMENT_GATEWAY`             | `whatsapp` o `wompi`                        |
-| `SESSION_SECRET`              | Secreto de las sesiones del panel           |
 
 La configuración se valida al arrancar: si falta algo o viene mal, el proceso
 falla de inmediato con un mensaje claro en vez de romperse cuando un cliente
