@@ -1,15 +1,15 @@
 /**
- * Configuración de la aplicación.
+ * Ajustes del negocio: a quién le llegan los pedidos, cuánto cuesta el
+ * domicilio, por dónde se cobra.
  *
- * Política de fallos, pensada para que un despliegue no se caiga por un dedazo
- * en el panel de Vercel:
+ * Ninguna variable de aquí puede tumbar la tienda. Si una viene vacía, con
+ * espacios de más o mal escrita, se usa un valor por defecto sensato y se
+ * avisa por consola — un dedazo en el panel de Vercel no debería dejar el
+ * negocio sin vender.
  *
- *   · `DATABASE_URL` es lo único que puede detener la aplicación. Sin base de
- *     datos no hay tienda, y fallar en voz alta es mejor que servir un
- *     catálogo vacío como si nada pasara.
- *   · Todo lo demás degrada a un valor sensato y avisa por consola. Una
- *     variable en blanco, con espacios de más o mal escrita no debería dejar
- *     el negocio sin vender.
+ * La conexión a la base de datos NO vive aquí: es asunto de Prisma, que la
+ * lee del esquema. Mezclarlas obligaba a páginas que ni consultan la base a
+ * exigir una cadena de conexión.
  *
  * Nada más en el código lee `process.env` directamente, salvo `resolveSiteUrl`.
  */
@@ -88,10 +88,12 @@ const amount = (name: string, byDefault: number) =>
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development').catch('development'),
 
-  // Lo único que puede detener la aplicación.
-  DATABASE_URL: z
-    .string()
-    .min(1, 'Falta DATABASE_URL: la tienda no puede arrancar sin base de datos.'),
+  // Nota: DATABASE_URL no está aquí a propósito. La lee Prisma directamente
+  // desde el esquema con env("DATABASE_URL"), y la aplicación nunca la
+  // consulta. Tenerla aquí acoplaba cosas que no van juntas: /checkout solo
+  // necesita el número de WhatsApp para pintar el encabezado, y aun así
+  // fallaba el build exigiendo una base de datos que esa página no usa.
+  // Si falta de verdad, Prisma falla con su propio mensaje al consultar.
 
   SITE_URL: z
     .string()
@@ -160,7 +162,6 @@ export type AppConfig = z.infer<typeof schema>;
 function load(): AppConfig {
   const parsed = schema.safeParse({
     NODE_ENV: process.env.NODE_ENV,
-    DATABASE_URL: firstPresent(process.env.DATABASE_URL),
     SITE_URL: resolveSiteUrl(),
     WHATSAPP_NUMBER: firstPresent(
       process.env.WHATSAPP_NUMBER,
