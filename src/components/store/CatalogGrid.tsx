@@ -11,12 +11,8 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { ProductCard } from './ProductCard';
-import {
-  CATEGORIES,
-  CATEGORY_ORDER,
-  CATEGORY_SHORT_LABELS,
-  type Category,
-} from '@core/domain/catalog/category';
+import { CATEGORIES, CATEGORY_ORDER, type Category } from '@core/domain/catalog/category';
+import { useTranslation } from '@/lib/i18n/context';
 import type { ProductDTO } from '@core/application/dto/product.dto';
 import { cn } from '@/lib/cn';
 
@@ -29,6 +25,7 @@ interface CatalogGridProps {
 }
 
 export function CatalogGrid({ products, searchable = false }: CatalogGridProps) {
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<Filter>('todos');
   const [search, setSearch] = useState('');
 
@@ -55,11 +52,19 @@ export function CatalogGrid({ products, searchable = false }: CatalogGridProps) 
     });
   }, [products, filter, search]);
 
+  /** Etiquetas cortas, traducidas — las largas no caben en las pestañas. */
+  const shortLabel: Record<Category, string> = {
+    individual: t.categorias.individualCorto,
+    mini: t.categorias.miniCorto,
+    combo: t.categorias.comboCorto,
+    eventos: t.categorias.eventosCorto,
+  };
+
   const tabs: { value: Filter; label: string }[] = [
-    { value: 'todos', label: 'Todos' },
+    { value: 'todos', label: t.catalogo.todos },
     ...availableCategories.map((category) => ({
       value: category as Filter,
-      label: CATEGORY_SHORT_LABELS[category],
+      label: shortLabel[category],
     })),
   ];
 
@@ -69,7 +74,7 @@ export function CatalogGrid({ products, searchable = false }: CatalogGridProps) 
         <div
           className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1"
           role="tablist"
-          aria-label="Filtrar por categoría"
+          aria-label={t.catalogo.filtrarAria}
         >
           {tabs.map((tab) => {
             const active = filter === tab.value;
@@ -105,8 +110,8 @@ export function CatalogGrid({ products, searchable = false }: CatalogGridProps) 
               type="search"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Buscar un sabor..."
-              aria-label="Buscar en el catálogo"
+              placeholder={t.catalogo.buscar}
+              aria-label={t.catalogo.buscarAria}
               className="w-full rounded-full border border-kraft-line bg-white py-2.5 pl-11 pr-4 text-[0.9rem] outline-none transition-colors placeholder:text-ink-soft/60 focus:border-green-deep"
             />
             <svg
@@ -124,12 +129,19 @@ export function CatalogGrid({ products, searchable = false }: CatalogGridProps) 
         )}
       </div>
 
-      <motion.div layout className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <motion.div
+        layout
+        /* `auto-rows-fr` iguala también entre filas: sin él, cada fila se
+           dimensiona por su cuenta y una con descripciones largas queda más
+           alta que el resto. */
+        className="grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3"
+      >
         <AnimatePresence mode="popLayout">
           {visible.map((product) => (
             <motion.div
               key={product.id}
               layout
+              className="h-full"
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.94 }}
@@ -147,7 +159,7 @@ export function CatalogGrid({ products, searchable = false }: CatalogGridProps) 
           animate={{ opacity: 1 }}
           className="py-20 text-center font-script text-3xl text-ink-soft"
         >
-          Nada por aquí todavía...
+          {t.catalogo.sinResultados}
         </motion.p>
       )}
     </div>

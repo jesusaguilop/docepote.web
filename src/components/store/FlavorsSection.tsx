@@ -1,5 +1,7 @@
 import { Reveal, RevealGroup, RevealItem } from '@/components/ui/Reveal';
 import type { FlavorDTO } from '@core/application/dto/product.dto';
+import { getDictionary } from '@/lib/i18n';
+import type { Locale } from '@/lib/i18n/locale';
 
 /**
  * Los seis sabores de la casa.
@@ -8,7 +10,15 @@ import type { FlavorDTO } from '@core/application/dto/product.dto';
  * sabores son el activo de marca de DOCEPOTE, así que tienen su propia
  * sección en vez de quedar escondidos dentro de cada ficha de producto.
  */
-export function FlavorsSection({ flavors }: { flavors: readonly FlavorDTO[] }) {
+export function FlavorsSection({
+  flavors,
+  locale,
+}: {
+  flavors: readonly FlavorDTO[];
+  locale: Locale;
+}) {
+  const t = getDictionary(locale);
+
   if (flavors.length === 0) return null;
 
   return (
@@ -16,21 +26,20 @@ export function FlavorsSection({ flavors }: { flavors: readonly FlavorDTO[] }) {
       <Reveal>
         <div className="mb-12 max-w-[54ch]">
           <p className="font-display text-[0.82rem] font-bold uppercase tracking-[0.12em] text-green-deep">
-            Nuestros sabores
+            {t.sabores.eyebrow}
           </p>
           <h2 className="mt-3 text-[clamp(1.9rem,3vw,2.6rem)] font-bold leading-tight">
-            Seis recetas, una sola obsesión
+            {t.sabores.titulo}
           </h2>
           <p className="mt-4 text-[1.02rem] leading-relaxed text-ink-soft">
-            Cada pote se monta capa por capa: bizcocho, brigadeiro y el topping que le da
-            carácter. Estos son los sabores que hacemos siempre.
+            {t.sabores.lead}
           </p>
         </div>
       </Reveal>
 
-      <RevealGroup className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      <RevealGroup className="grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {flavors.map((flavor) => (
-          <RevealItem key={flavor.id}>
+          <RevealItem key={flavor.id} className="h-full">
             <article className="group h-full rounded-md border border-kraft-line/70 bg-white p-6 transition-shadow duration-300 hover:shadow-[0_10px_30px_rgba(37,26,16,0.1)]">
               <span
                 className="block text-3xl transition-transform duration-300 group-hover:scale-110"

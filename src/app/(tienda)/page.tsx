@@ -7,6 +7,7 @@ import { CatalogGrid } from '@/components/store/CatalogGrid';
 import { FlavorsSection } from '@/components/store/FlavorsSection';
 import { Reveal } from '@/components/ui/Reveal';
 import { ButtonLink } from '@/components/ui/Button';
+import { getTranslations } from '@/lib/i18n/server';
 
 /**
  * Portada.
@@ -16,23 +17,29 @@ import { ButtonLink } from '@/components/ui/Button';
  * los clientes de una doceria de barrio — y no obliga a esperar un fetch.
  */
 
-/** Misma política que el catálogo: se regenera cada minuto y el panel la
-    invalida al guardar cambios. */
-export const revalidate = 60;
+/**
+ * Se renderiza por petición porque el idioma vive en una cookie y el
+ * inventario cambia durante el día: una copia congelada mostraría el catálogo
+ * de hace un rato, en el idioma de otra persona.
+ */
+export const dynamic = 'force-dynamic';
 
-const SCHEDULE = [
-  { day: 'Lunes a viernes', hours: '9:00 am – 7:00 pm' },
-  { day: 'Sábados', hours: '9:00 am – 8:00 pm' },
-  { day: 'Domingos', hours: '2:00 pm – 8:00 pm' },
-];
+const SCHEDULE_HOURS = ['9:00 am – 7:00 pm', '9:00 am – 8:00 pm', '2:00 pm – 8:00 pm'];
 
 export default async function HomePage() {
   const { catalog, config } = container();
+  const { locale, t } = await getTranslations();
 
   const [productsResult, flavorsResult] = await Promise.all([
-    catalog.list.execute({ onlyActive: true }),
-    catalog.listFlavors.execute(),
+    catalog.list.execute({ onlyActive: true, locale }),
+    catalog.listFlavors.execute(locale),
   ]);
+
+  const schedule = [
+    { day: t.horario.lunesViernes, hours: SCHEDULE_HOURS[0] },
+    { day: t.horario.sabados, hours: SCHEDULE_HOURS[1] },
+    { day: t.horario.domingos, hours: SCHEDULE_HOURS[2] },
+  ];
 
   const products = productsResult.ok ? productsResult.value : [];
   const flavors = flavorsResult.ok ? flavorsResult.value : [];
@@ -52,7 +59,7 @@ export default async function HomePage() {
             />
             <Image
               src="/brand/packaging-kraft.jpg"
-              alt="Bolsa de papel kraft cerrada con el sticker del gato de Doce pote"
+              alt={t.historia.fotoAlt}
               width={602}
               height={430}
               className="relative h-auto w-full rounded-md"
@@ -63,35 +70,29 @@ export default async function HomePage() {
 
         <Reveal direction="right" delay={0.1}>
           <h2 className="text-[clamp(1.9rem,3vw,2.6rem)] font-bold leading-tight">
-            ¿Qué es un bolo no pote?
+            {t.historia.titulo}
           </h2>
           <p className="mt-5 text-[1.02rem] leading-relaxed text-ink-soft">
-            Es la experiencia de llevar contigo, en un potecito, una deliciosa y típica
-            sobremesa brasileña: una torta preparada con capas de bizcocho y brigadeiro,
-            cuidadosamente montada dentro de un vasito para disfrutar cada cucharada.
+            {t.historia.parrafo1}
           </p>
           <p className="mt-4 text-[1.02rem] leading-relaxed text-ink-soft">
-            Cada pote se empaca a mano en bolsa de papel kraft, cerrada con nuestro sticker —
-            pensada para que el postre viaje bien y se vea igual de bien cuando la abres. Es
-            nuestra manera más rica de hacerte sentir un pedacito de Brasil aquí contigo, en
-            Valledupar.
+            {t.historia.parrafo2}
           </p>
-          <p className="mt-7 font-script text-3xl text-green-deep">— Equipo DOCEPOTE</p>
+          <p className="mt-7 font-script text-3xl text-green-deep">{t.historia.firma}</p>
         </Reveal>
       </section>
 
-      <FlavorsSection flavors={flavors} />
+      <FlavorsSection flavors={flavors} locale={locale} />
 
       {/* ── Catálogo ───────────────────────────────────────────────────── */}
       <section id="catalogo" className="wrap py-8 pb-24">
         <Reveal>
           <div className="mb-12 max-w-[52ch]">
             <h2 className="text-[clamp(1.9rem,3vw,2.6rem)] font-bold leading-tight">
-              El catálogo de hoy
+              {t.catalogo.tituloPortada}
             </h2>
             <p className="mt-4 text-[1.02rem] leading-relaxed text-ink-soft">
-              Individuales de 8 oz, minis para probar de todo y kits para eventos.
-              Preparados en tandas pequeñas — cuando se acaban, se acaban.
+              {t.catalogo.leadPortada}
             </p>
           </div>
         </Reveal>
@@ -100,7 +101,7 @@ export default async function HomePage() {
           <CatalogGrid products={products} />
         ) : (
           <p className="py-16 text-center font-script text-3xl text-ink-soft">
-            Estamos horneando... vuelve en un rato.
+            {t.catalogo.horneando}
           </p>
         )}
       </section>
@@ -110,10 +111,10 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-green-deep/85" aria-hidden />
         <Reveal className="wrap relative z-10 text-center">
           <p className="font-script text-[clamp(2.2rem,5vw,3.4rem)] leading-tight text-white">
-            &ldquo;Un potecito de cariño a la vez.&rdquo;
+            {t.frase.cita}
           </p>
           <p className="mt-4 text-[0.98rem] text-paper/85">
-            Sin fórmulas raras — solo buenos ingredientes y tiempo.
+            {t.frase.sub}
           </p>
         </Reveal>
       </section>
@@ -121,14 +122,13 @@ export default async function HomePage() {
       {/* ── Horario ────────────────────────────────────────────────────── */}
       <section id="horario" className="wrap grid gap-12 py-24 lg:grid-cols-2 lg:items-center">
         <Reveal direction="left">
-          <h2 className="text-[clamp(1.7rem,2.6vw,2.3rem)] font-bold">Nuestro horario</h2>
+          <h2 className="text-[clamp(1.7rem,2.6vw,2.3rem)] font-bold">{t.horario.titulo}</h2>
           <p className="mt-4 max-w-[42ch] text-[1.02rem] leading-relaxed text-ink-soft">
-            Puedes pasar por tu pedido en el punto de entrega o coordinar domicilio dentro de
-            estos horarios.
+            {t.horario.lead}
           </p>
           <div className="mt-8 flex flex-wrap gap-4">
             <ButtonLink href="/catalogo" variant="green">
-              Hacer un pedido
+              {t.horario.hacerPedido}
             </ButtonLink>
             <Link
               href={`https://wa.me/${config.WHATSAPP_NUMBER}`}
@@ -136,18 +136,18 @@ export default async function HomePage() {
               rel="noopener noreferrer"
               className="inline-flex min-h-11 items-center self-center font-display font-semibold text-ink-soft underline underline-offset-4 transition-colors hover:text-ink"
             >
-              Escríbenos
+              {t.horario.escribenos}
             </Link>
           </div>
         </Reveal>
 
         <Reveal direction="right" delay={0.1}>
           <dl className="rounded-md border border-kraft-line bg-white/70">
-            {SCHEDULE.map((row, index) => (
+            {schedule.map((row, index) => (
               <div
                 key={row.day}
                 className={`flex items-center justify-between px-6 py-5 ${
-                  index < SCHEDULE.length - 1 ? 'border-b border-kraft-line/60' : ''
+                  index < schedule.length - 1 ? 'border-b border-kraft-line/60' : ''
                 }`}
               >
                 <dt className="font-display text-[0.98rem] font-semibold">{row.day}</dt>

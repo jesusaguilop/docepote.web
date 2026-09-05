@@ -19,6 +19,7 @@ import { getCartSummary } from '@/app/actions/cart';
 import { placeOrder } from '@/app/actions/orders';
 import { JarIcon } from '@/components/brand/JarIcon';
 import { Button } from '@/components/ui/Button';
+import { useTranslation } from '@/lib/i18n/context';
 import { cn } from '@/lib/cn';
 import type { CartSummaryDTO } from '@core/application/ordering/get-cart-summary.use-case';
 import type { FulfillmentMethod } from '@core/domain/ordering/fulfillment';
@@ -32,15 +33,16 @@ interface FormState {
 
 const EMPTY_FORM: FormState = { name: '', phone: '', address: '', notes: '' };
 
-const METHODS: { value: FulfillmentMethod; label: string; hint: string }[] = [
-  { value: 'pickup', label: 'Recojo en el punto', hint: 'Sin costo adicional' },
-  { value: 'delivery', label: 'Domicilio', hint: 'Dentro de Valledupar' },
-];
-
 export function CheckoutForm() {
   const router = useRouter();
   const { items, totalItems, clear, ready } = useCart();
   const { notify } = useToast();
+  const { t, fill } = useTranslation();
+
+  const methods: { value: FulfillmentMethod; label: string; hint: string }[] = [
+    { value: 'pickup', label: t.checkout.recojo, hint: t.checkout.recojoHint },
+    { value: 'delivery', label: t.checkout.domicilio, hint: t.checkout.domicilioHint },
+  ];
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [method, setMethod] = useState<FulfillmentMethod>('pickup');
@@ -80,13 +82,13 @@ export function CheckoutForm() {
     const errors: Record<string, string> = {};
 
     if (form.name.trim().length < 2) {
-      errors.name = 'Cuéntanos tu nombre.';
+      errors.name = t.checkout.errorNombre;
     }
     if (form.phone.replace(/\D/g, '').length < 10) {
-      errors.phone = 'Necesitamos un celular de 10 dígitos.';
+      errors.phone = t.checkout.errorCelular;
     }
     if (method === 'delivery' && form.address.trim().length < 8) {
-      errors.address = 'Escribe la dirección completa, con barrio.';
+      errors.address = t.checkout.errorDireccion;
     }
 
     setFieldErrors(errors);
@@ -147,11 +149,11 @@ export function CheckoutForm() {
         {/* ── Entrega ─────────────────────────────────────────────────── */}
         <fieldset>
           <legend className="font-display text-[1.15rem] font-bold">
-            ¿Cómo lo quieres recibir?
+            {t.checkout.comoRecibir}
           </legend>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            {METHODS.map((option) => {
+            {methods.map((option) => {
               const active = method === option.value;
               return (
                 <label
@@ -201,21 +203,21 @@ export function CheckoutForm() {
 
         {/* ── Datos ───────────────────────────────────────────────────── */}
         <fieldset className="space-y-5">
-          <legend className="font-display text-[1.15rem] font-bold">Tus datos</legend>
+          <legend className="font-display text-[1.15rem] font-bold">{t.checkout.tusDatos}</legend>
 
           <Field
             id="name"
-            label="Nombre"
+            label={t.checkout.nombre}
             value={form.name}
             onChange={update('name')}
             error={fieldErrors.name}
             autoComplete="name"
-            placeholder="Como te decimos"
+            placeholder={t.checkout.nombrePlaceholder}
           />
 
           <Field
             id="phone"
-            label="Celular (WhatsApp)"
+            label={t.checkout.celular}
             value={form.phone}
             onChange={update('phone')}
             error={fieldErrors.phone}
@@ -235,12 +237,12 @@ export function CheckoutForm() {
               >
                 <Field
                   id="address"
-                  label="Dirección de entrega"
+                  label={t.checkout.direccion}
                   value={form.address}
                   onChange={update('address')}
                   error={fieldErrors.address}
                   autoComplete="street-address"
-                  placeholder="Calle 16 #12-30, barrio Novalito"
+                  placeholder={t.checkout.direccionPlaceholder}
                 />
               </motion.div>
             )}
@@ -251,7 +253,8 @@ export function CheckoutForm() {
               htmlFor="notes"
               className="mb-1.5 block font-display text-[0.88rem] font-semibold"
             >
-              Notas <span className="font-normal text-ink-soft">(opcional)</span>
+              {t.checkout.notas}{' '}
+              <span className="font-normal text-ink-soft">{t.checkout.opcional}</span>
             </label>
             <textarea
               id="notes"
@@ -259,7 +262,7 @@ export function CheckoutForm() {
               onChange={update('notes')}
               rows={3}
               maxLength={400}
-              placeholder="Dedicatoria, alergias, hora preferida..."
+              placeholder={t.checkout.notasPlaceholder}
               className="w-full resize-none rounded-md border border-kraft-line bg-white px-4 py-3 text-[0.94rem] outline-none transition-colors placeholder:text-ink-soft/55 focus:border-green-deep"
             />
           </div>
@@ -270,9 +273,9 @@ export function CheckoutForm() {
       <aside className="lg:sticky lg:top-28">
         <div className="rounded-md border border-kraft-line bg-white">
           <h2 className="border-b border-kraft-line/60 px-6 py-4 font-display text-[1.05rem] font-bold">
-            Tu pedido
+            {t.checkout.tuPedido}
             <span className="ml-2 font-normal text-ink-soft">
-              ({totalItems} {totalItems === 1 ? 'unidad' : 'unidades'})
+              ({totalItems} {totalItems === 1 ? t.checkout.unidad : t.checkout.unidades})
             </span>
           </h2>
 
@@ -300,22 +303,23 @@ export function CheckoutForm() {
 
           {summary && (
             <div className="space-y-2.5 border-t border-kraft-line/60 px-6 py-5 text-[0.92rem]">
-              <Row label="Subtotal" value={summary.subtotalFormatted} />
+              <Row label={t.checkout.subtotal} value={summary.subtotalFormatted} />
               <Row
-                label={method === 'delivery' ? 'Domicilio' : 'Recojo en el punto'}
+                label={method === 'delivery' ? t.checkout.domicilio : t.checkout.recojo}
                 value={summary.deliveryFeeFormatted}
                 highlight={summary.freeDelivery}
               />
 
               {summary.missingForFreeDeliveryFormatted && (
                 <p className="rounded bg-green-deep/8 px-3 py-2 text-[0.82rem] text-green-deep">
-                  Agrega {summary.missingForFreeDeliveryFormatted} más y el domicilio va por
-                  nuestra cuenta.
+                  {fill(t.checkout.agregaMas, {
+                    monto: summary.missingForFreeDeliveryFormatted,
+                  })}
                 </p>
               )}
 
               <div className="flex items-center justify-between border-t border-kraft-line/60 pt-3 font-display">
-                <span className="text-[1rem] font-bold">Total</span>
+                <span className="text-[1rem] font-bold">{t.checkout.total}</span>
                 <motion.span
                   key={summary.total}
                   initial={{ scale: 1.1 }}
@@ -341,11 +345,11 @@ export function CheckoutForm() {
             )}
 
             <Button type="submit" variant="green" className="w-full" disabled={submitDisabled}>
-              {isSubmitting ? 'Confirmando...' : 'Confirmar pedido'}
+              {isSubmitting ? t.checkout.confirmando : t.checkout.confirmar}
             </Button>
 
             <p className="mt-3 text-center text-[0.78rem] leading-relaxed text-ink-soft">
-              Al confirmar te abrimos WhatsApp con el resumen para cerrar el pago.
+              {t.checkout.aviso}
             </p>
           </div>
         </div>
@@ -372,7 +376,7 @@ export function CheckoutForm() {
 
         <div className="flex items-center gap-3">
           <div className="min-w-0 shrink-0">
-            <p className="text-[0.72rem] uppercase tracking-wide text-ink-soft">Total</p>
+            <p className="text-[0.72rem] uppercase tracking-wide text-ink-soft">{t.checkout.total}</p>
             <p className="font-display text-[1.25rem] font-bold leading-tight tabular-nums">
               {summary?.totalFormatted ?? '—'}
             </p>
@@ -384,7 +388,7 @@ export function CheckoutForm() {
             className="h-12 flex-1"
             disabled={submitDisabled}
           >
-            {isSubmitting ? 'Confirmando...' : 'Confirmar pedido'}
+            {isSubmitting ? t.checkout.confirmando : t.checkout.confirmar}
           </Button>
         </div>
       </div>
@@ -449,6 +453,8 @@ function Field({ id, label, error, ...rest }: FieldProps) {
 }
 
 function EmptyCheckout() {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col items-center gap-4 py-24 text-center">
       <motion.div
@@ -458,15 +464,15 @@ function EmptyCheckout() {
       >
         <JarIcon fillColor="#e8dfc6" pattern="drop" />
       </motion.div>
-      <p className="font-script text-4xl text-ink-soft">Tu carrito está vacío</p>
+      <p className="font-script text-4xl text-ink-soft">{t.checkout.vacio}</p>
       <p className="max-w-[34ch] text-[0.95rem] text-ink-soft">
-        Elige algo del catálogo y vuelve — te lo guardamos aquí.
+        {t.checkout.vacioLead}
       </p>
       <Link
         href="/catalogo"
         className="mt-3 rounded-sm bg-ink px-6 py-3.5 font-display font-semibold text-paper transition-colors hover:bg-[#100b06]"
       >
-        Ir al catálogo
+        {t.checkout.irCatalogo}
       </Link>
     </div>
   );

@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { JarIcon } from '@/components/brand/JarIcon';
 import { AddToCartButton } from './AddToCartButton';
 import { DiscountBadge, PriceTag } from './PriceTag';
+import { useTranslation } from '@/lib/i18n/context';
 import { cn } from '@/lib/cn';
 import type { ProductDTO } from '@core/application/dto/product.dto';
 
@@ -16,12 +17,17 @@ import type { ProductDTO } from '@core/application/dto/product.dto';
  * navegación por teclado.
  */
 export function ProductCard({ product }: { product: ProductDTO }) {
+  const { t, fill } = useTranslation();
+
   return (
     <motion.article
       whileHover={{ y: -6 }}
       transition={{ type: 'spring', stiffness: 380, damping: 26 }}
       className={cn(
-        'group relative flex flex-col overflow-hidden rounded-md border border-kraft-line/70 bg-white',
+        // `h-full`: el envoltorio animado se estira con la grilla, pero el
+        // artículo de dentro se quedaba del alto de su contenido — de ahí que
+        // unas tarjetas salieran más altas que otras en la misma fila.
+        'group relative flex h-full flex-col overflow-hidden rounded-md border border-kraft-line/70 bg-white',
         'transition-shadow duration-300 hover:shadow-[0_14px_38px_rgba(37,26,16,0.13)]',
         !product.purchasable && 'opacity-75',
       )}
@@ -37,7 +43,7 @@ export function ProductCard({ product }: { product: ProductDTO }) {
 
       {product.lowStock && !product.soldOut && (
         <span className="absolute right-4 top-4 z-10 rounded-full bg-berry/10 px-2.5 py-1 font-display text-[0.7rem] font-bold text-berry">
-          Quedan {product.stock}
+          {fill(t.producto.quedan, { n: product.stock ?? 0 })}
         </span>
       )}
 
@@ -65,7 +71,7 @@ export function ProductCard({ product }: { product: ProductDTO }) {
 
           {product.soldOut && (
             <span className="absolute inset-x-0 bottom-3 text-center font-script text-2xl text-ink-soft">
-              se acabó por hoy
+              {t.producto.seAcabo}
             </span>
           )}
         </div>
@@ -74,7 +80,7 @@ export function ProductCard({ product }: { product: ProductDTO }) {
           {/* Metadatos del formato: onzas para individuales, unidades para combos. */}
           <p className="mb-1.5 flex flex-wrap items-center gap-x-2 font-display text-[0.72rem] font-bold uppercase tracking-[0.09em] text-green-deep">
             {product.flavor && <span>{product.flavor.emoji} {product.flavor.name}</span>}
-            {product.units && <span>{product.units} unidades</span>}
+            {product.units && <span>{fill(t.producto.unidades, { n: product.units })}</span>}
             {product.sizeOz && <span className="text-ink-soft">{product.sizeOz} oz</span>}
           </p>
 
@@ -92,7 +98,7 @@ export function ProductCard({ product }: { product: ProductDTO }) {
           <PriceTag product={product} />
           {product.pricePerUnitFormatted && (
             <p className="text-[0.74rem] text-ink-soft">
-              {product.pricePerUnitFormatted} c/u
+              {product.pricePerUnitFormatted} {t.producto.cadaUno}
             </p>
           )}
         </div>

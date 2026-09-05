@@ -2,16 +2,8 @@
 
 import { motion } from 'motion/react';
 import { ORDER_STATUSES, type OrderStatus } from '@core/domain/ordering/order-status';
+import { useTranslation } from '@/lib/i18n/context';
 import { cn } from '@/lib/cn';
-
-/** Los pasos que el cliente ve; "cancelado" se muestra aparte. */
-const VISIBLE_STEPS: { status: OrderStatus; label: string; hint: string }[] = [
-  { status: 'pending', label: 'Recibido', hint: 'Ya nos llegó tu pedido' },
-  { status: 'confirmed', label: 'Confirmado', hint: 'Lo confirmamos contigo' },
-  { status: 'preparing', label: 'En preparación', hint: 'Manos a la obra' },
-  { status: 'ready', label: 'Listo', hint: 'Listo para salir' },
-  { status: 'delivered', label: 'Entregado', hint: '¡Que lo disfrutes!' },
-];
 
 /**
  * Estado del pedido.
@@ -22,12 +14,23 @@ const VISIBLE_STEPS: { status: OrderStatus; label: string; hint: string }[] = [
  * el ancho completo y además caben las descripciones.
  */
 export function OrderTracker({ status }: { status: OrderStatus }) {
+  const { t, fill } = useTranslation();
+
+  /** Los pasos que el cliente ve; "cancelado" se muestra aparte. */
+  const VISIBLE_STEPS: { status: OrderStatus; label: string; hint: string }[] = [
+    { status: 'pending', label: t.pedido.pasos.recibido, hint: t.pedido.pasos.recibidoHint },
+    { status: 'confirmed', label: t.pedido.pasos.confirmado, hint: t.pedido.pasos.confirmadoHint },
+    { status: 'preparing', label: t.pedido.pasos.preparacion, hint: t.pedido.pasos.preparacionHint },
+    { status: 'ready', label: t.pedido.pasos.listo, hint: t.pedido.pasos.listoHint },
+    { status: 'delivered', label: t.pedido.pasos.entregado, hint: t.pedido.pasos.entregadoHint },
+  ];
+
   if (status === 'cancelled') {
     return (
       <div className="rounded-md border border-berry/30 bg-berry/5 px-5 py-5 sm:px-6">
-        <p className="font-display font-bold text-berry">Pedido cancelado</p>
+        <p className="font-display font-bold text-berry">{t.pedido.cancelado}</p>
         <p className="mt-1 text-[0.9rem] text-ink-soft">
-          Si crees que fue un error, escríbenos por WhatsApp y lo revisamos.
+          {t.pedido.canceladoLead}
         </p>
       </div>
     );
@@ -160,8 +163,11 @@ export function OrderTracker({ status }: { status: OrderStatus }) {
       </div>
 
       <p className="sr-only">
-        Estado actual del pedido: {VISIBLE_STEPS[activeIndex]?.label}. Paso{' '}
-        {activeIndex + 1} de {VISIBLE_STEPS.length}.
+        {fill(t.pedido.pasoDe, {
+          estado: VISIBLE_STEPS[activeIndex]?.label ?? '',
+          actual: activeIndex + 1,
+          total: VISIBLE_STEPS.length,
+        })}
       </p>
 
       {/* Se referencia la lista completa de estados del dominio para que este

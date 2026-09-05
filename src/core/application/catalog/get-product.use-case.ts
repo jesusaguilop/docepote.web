@@ -13,7 +13,7 @@ export class GetProductBySlugUseCase {
     private readonly flavors: FlavorReader,
   ) {}
 
-  async execute(rawSlug: string): Promise<Result<ProductDTO, DomainError>> {
+  async execute(rawSlug: string, locale = 'es'): Promise<Result<ProductDTO, DomainError>> {
     let slug: Slug;
     try {
       slug = Slug.of(rawSlug);
@@ -25,7 +25,7 @@ export class GetProductBySlugUseCase {
     if (!product) return Err(new NotFoundError('el producto', rawSlug));
 
     const flavor = product.flavorId ? await this.flavors.findById(product.flavorId) : null;
-    return Ok(toProductDTO(product, flavor));
+    return Ok(toProductDTO(product, flavor, locale));
   }
 }
 
@@ -42,7 +42,7 @@ export class GetRelatedProductsUseCase {
     private readonly flavors: FlavorReader,
   ) {}
 
-  async execute(slug: string, limit = 3): Promise<Result<ProductDTO[], DomainError>> {
+  async execute(slug: string, limit = 3, locale = 'es'): Promise<Result<ProductDTO[], DomainError>> {
     let parsed: Slug;
     try {
       parsed = Slug.of(slug);
@@ -69,6 +69,6 @@ export class GetRelatedProductsUseCase {
     }
 
     const flavorsById = await loadFlavorIndex(this.flavors, picks);
-    return Ok(toProductDTOs(picks, flavorsById));
+    return Ok(toProductDTOs(picks, flavorsById, locale));
   }
 }

@@ -1,13 +1,7 @@
 'use client';
 
 import { motion } from 'motion/react';
-
-const FACTS = [
-  { value: '6', label: 'sabores de la casa' },
-  { value: '100%', label: 'hecho a mano en Valledupar' },
-  { value: '8 oz', label: 'de bizcocho y brigadeiro' },
-  { value: 'Kits', label: 'para eventos y celebraciones' },
-];
+import { useTranslation } from '@/lib/i18n/context';
 
 /**
  * Franja de datos en movimiento continuo.
@@ -17,6 +11,15 @@ const FACTS = [
  * primera, así que el bucle no tiene costura visible.
  */
 export function FactsStrip() {
+  const { t } = useTranslation();
+
+  const FACTS = [
+    { value: '6', label: t.facts.sabores },
+    { value: '100%', label: t.facts.hechoAMano },
+    { value: '8 oz', label: t.facts.contenido },
+    { value: 'Kits', label: t.facts.kits },
+  ];
+
   return (
     <div className="overflow-hidden border-y border-kraft-line bg-paper-2 py-4">
       <motion.div

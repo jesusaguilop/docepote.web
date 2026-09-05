@@ -32,6 +32,8 @@ interface SeedFlavor {
   emoji: string;
   summary: string;
   composition: string | null;
+  /** Traducción al portugués. `null` en un campo = se muestra el español. */
+  pt: { name: string | null; summary: string; composition: string | null };
   /** Cómo se pinta el pote de este sabor en la tienda. */
   fillColor: string;
   pattern: Pattern;
@@ -44,6 +46,7 @@ const FLAVORS: SeedFlavor[] = [
     emoji: '🤍',
     summary: 'Vainilla, chocolate y brigadeiro de leche Klim.',
     composition: null,
+        pt: { name: null, summary: 'Baunilha, chocolate e brigadeiro de leite Klim.', composition: null },
     fillColor: '#c8a878',
     pattern: 'wave',
   },
@@ -54,6 +57,7 @@ const FLAVORS: SeedFlavor[] = [
     summary: 'Vainilla con crema artesanal de fresas y arándanos.',
     composition:
       'Mezcla de brigadeiro con mermelada artesanal 100% natural hecha con fresas y arándanos + capa de bizcocho pão de ló de vainilla + topping de fresas picadas.',
+        pt: { name: null, summary: 'Baunilha com creme artesanal de morango e mirtilo.', composition: 'Mistura de brigadeiro com geleia artesanal 100% natural de morango e mirtilo + camada de pão de ló de baunilha + cobertura de morangos picados.' },
     fillColor: '#b6304a',
     pattern: 'drop',
   },
@@ -63,6 +67,7 @@ const FLAVORS: SeedFlavor[] = [
     emoji: '💚',
     summary: 'Cremoso, suave y con el delicioso sabor del pistache.',
     composition: null,
+        pt: { name: null, summary: 'Cremoso, suave e com o delicioso sabor de pistache.', composition: null },
     fillColor: '#8fae4e',
     pattern: 'wave',
   },
@@ -73,6 +78,7 @@ const FLAVORS: SeedFlavor[] = [
     summary:
       'Bizcocho de chocolate con una irresistible crema de brigadeiro artesanal de chocolate medio amargo.',
     composition: 'Brigadeiro de chocolate + torta de chocolate 100% cacao.',
+        pt: { name: null, summary: 'Pão de ló de chocolate com um irresistível creme de brigadeiro artesanal de chocolate meio amargo.', composition: 'Brigadeiro de chocolate + bolo de chocolate 100% cacau.' },
     fillColor: '#4a2c18',
     pattern: 'wave',
   },
@@ -82,6 +88,7 @@ const FLAVORS: SeedFlavor[] = [
     emoji: '🥜',
     summary: 'La combinación perfecta de crema de Milo y galletas sultana con chocolate blanco.',
     composition: null,
+        pt: { name: null, summary: 'A combinação perfeita de creme de Milo e biscoitos sultana com chocolate branco.', composition: null },
     fillColor: '#8a6a3f',
     pattern: 'dots',
   },
@@ -92,6 +99,7 @@ const FLAVORS: SeedFlavor[] = [
     summary: 'Cremoso, chocolatoso y con el toque irresistible de Oreo.',
     composition:
       'Capa de brigadeiro de chocolate blanco con galleta Oreo triturada + bizcocho pão de ló de chocolate 100% cacao + topping de galleta Oreo pulverizada.',
+        pt: { name: null, summary: 'Cremoso, chocolatudo e com o toque irresistível de Oreo.', composition: 'Camada de brigadeiro de chocolate branco com biscoito Oreo triturado + pão de ló de chocolate 100% cacau + cobertura de Oreo em pó.' },
     fillColor: '#2e2a2a',
     pattern: 'dots',
   },
@@ -110,6 +118,10 @@ interface SeedProduct {
   /** Precio anterior tachado. `null` si no hay oferta. */
   previousPrice: number | null;
   description: string;
+  /** Traducción al portugués. El nombre suele servir igual en ambos idiomas
+      — "bolo no pote" ya es portugués —, así que a menudo solo cambia la
+      descripción. `null` en un campo = se muestra el español. */
+  pt: { name: string | null; description: string };
   badge: string | null;
   sizeOz: number | null;
   units: number | null;
@@ -126,6 +138,7 @@ const PRODUCTS: SeedProduct[] = [
     price: 13000,
     previousPrice: 13600,
     description: 'Brigadeiro de chocolate + torta de chocolate 100% cacao. ¡Qué combinación!',
+    pt: { name: null, description: 'Brigadeiro de chocolate + bolo de chocolate 100% cacau. Que combinação!' },
     badge: 'Más pedido',
     sizeOz: 8,
     units: null,
@@ -138,6 +151,7 @@ const PRODUCTS: SeedProduct[] = [
     previousPrice: 13500,
     description:
       'Brigadeiro de chocolate blanco con Oreo triturada sobre bizcocho de cacao, con topping de galleta.',
+    pt: { name: null, description: 'Brigadeiro de chocolate branco com Oreo triturado sobre pão de ló de cacau, com cobertura de biscoito.' },
     badge: null,
     sizeOz: 8,
     units: null,
@@ -149,6 +163,7 @@ const PRODUCTS: SeedProduct[] = [
     price: 13000,
     previousPrice: 13500,
     description: 'Vainilla, chocolate y brigadeiro de leche Klim en capas.',
+    pt: { name: null, description: 'Baunilha, chocolate e brigadeiro de leite Klim em camadas.' },
     badge: null,
     sizeOz: 8,
     units: null,
@@ -161,6 +176,7 @@ const PRODUCTS: SeedProduct[] = [
     previousPrice: 13500,
     description:
       'Vainilla con crema artesanal de fresas y arándanos, y topping de fresas picadas.',
+    pt: { name: null, description: 'Baunilha com creme artesanal de morango e mirtilo, e cobertura de morangos picados.' },
     badge: null,
     sizeOz: 8,
     units: null,
@@ -172,6 +188,7 @@ const PRODUCTS: SeedProduct[] = [
     price: 13000,
     previousPrice: 13500,
     description: 'Crema de Milo y galletas sultana con chocolate blanco.',
+    pt: { name: null, description: 'Creme de Milo e biscoitos sultana com chocolate branco.' },
     badge: null,
     sizeOz: 8,
     units: null,
@@ -185,6 +202,7 @@ const PRODUCTS: SeedProduct[] = [
     price: 5800,
     previousPrice: null,
     description: 'Cremoso, suave y con el delicioso sabor del pistache. En versión mini.',
+    pt: { name: null, description: 'Cremoso, suave e com o delicioso sabor de pistache. Na versão mini.' },
     badge: null,
     sizeOz: null,
     units: null,
@@ -196,6 +214,7 @@ const PRODUCTS: SeedProduct[] = [
     price: 5800,
     previousPrice: null,
     description: 'Vainilla, chocolate y brigadeiro de leche Klim. En versión mini.',
+    pt: { name: null, description: 'Baunilha, chocolate e brigadeiro de leite Klim. Na versão mini.' },
     badge: null,
     sizeOz: null,
     units: null,
@@ -207,6 +226,7 @@ const PRODUCTS: SeedProduct[] = [
     price: 5800,
     previousPrice: null,
     description: 'Brigadeiro de chocolate y torta 100% cacao. En versión mini.',
+    pt: { name: null, description: 'Brigadeiro de chocolate e bolo 100% cacau. Na versão mini.' },
     badge: null,
     sizeOz: null,
     units: null,
@@ -218,6 +238,7 @@ const PRODUCTS: SeedProduct[] = [
     price: 5800,
     previousPrice: null,
     description: 'Vainilla con crema artesanal de fresas y arándanos. En versión mini.',
+    pt: { name: null, description: 'Baunilha com creme artesanal de morango e mirtilo. Na versão mini.' },
     badge: null,
     sizeOz: null,
     units: null,
@@ -229,6 +250,7 @@ const PRODUCTS: SeedProduct[] = [
     price: 5800,
     previousPrice: null,
     description: 'Brigadeiro de chocolate blanco con Oreo. En versión mini.',
+    pt: { name: null, description: 'Brigadeiro de chocolate branco com Oreo. Na versão mini.' },
     badge: null,
     sizeOz: null,
     units: null,
@@ -243,6 +265,7 @@ const PRODUCTS: SeedProduct[] = [
     previousPrice: 17500,
     description:
       '3 minis bolos no pote de sabores variados. Elige tus favoritos. Perfecto para compartir. Sabores en la foto: Chocoklim, DocePistache y Oreo.',
+    pt: { name: 'Minis X3 para compartilhar', description: '3 minis bolos no pote de sabores variados. Escolha os seus favoritos. Perfeito para dividir. Sabores da foto: Chocoklim, DocePistache e Oreo.' },
     badge: 'Para compartir',
     sizeOz: null,
     units: 3,
@@ -258,6 +281,7 @@ const PRODUCTS: SeedProduct[] = [
     previousPrice: 80000,
     description:
       'Una deliciosa degustación de nuestros 6 sabores para eventos, reuniones, cumpleaños y encuentros entre amigos. Versión mini shots para probar y compartir un poquito de cada uno.',
+    pt: { name: 'Shots eventos kit 30', description: 'Uma deliciosa degustação dos nossos 6 sabores para eventos, encontros, aniversários e reuniões com amigos. Versão mini shots para provar e dividir um pouquinho de cada um.' },
     badge: 'Eventos',
     sizeOz: null,
     units: 30,
@@ -275,6 +299,9 @@ async function seedFlavors(): Promise<void> {
       emoji: flavor.emoji,
       summary: flavor.summary,
       composition: flavor.composition,
+      namePt: flavor.pt.name,
+      summaryPt: flavor.pt.summary,
+      compositionPt: flavor.pt.composition,
       position: index,
     };
 
@@ -306,6 +333,8 @@ async function seedProducts(): Promise<void> {
     const shared = {
       name: item.name,
       description: item.description,
+      namePt: item.pt.name,
+      descriptionPt: item.pt.description,
       price: item.price,
       previousPrice: item.previousPrice,
       category: item.category,

@@ -75,6 +75,8 @@ export class SaveProductUseCase {
         slug,
         name: input.name,
         description: input.description,
+        // El panel edita el español; la traducción existente se conserva.
+        translations: existing?.translations ?? null,
         price: Money.of(Math.trunc(input.price)),
         previousPrice:
           input.previousPrice == null ? null : Money.of(Math.trunc(input.previousPrice)),

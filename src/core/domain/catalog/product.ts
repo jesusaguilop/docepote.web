@@ -16,11 +16,18 @@ import { JarArt } from './jar-art';
 /** `null` en stock significa "sin control de inventario" (se hace por encargo). */
 export type Stock = number | null;
 
+export interface ProductTranslation {
+  readonly name: string | null;
+  readonly description: string | null;
+}
+
 export interface ProductProps {
   readonly id: string;
   readonly slug: Slug;
   readonly name: string;
   readonly description: string;
+  /** Traducción al portugués; `null` por campo significa "usa el español". */
+  readonly translations: ProductTranslation | null;
   readonly price: Money;
   /**
    * Precio anterior, el que se muestra tachado. `null` cuando no hay oferta.
@@ -51,6 +58,7 @@ export class Product {
   readonly slug: Slug;
   readonly name: string;
   readonly description: string;
+  readonly translations: ProductTranslation | null;
   readonly price: Money;
   readonly previousPrice: Money | null;
   readonly category: Category;
@@ -69,6 +77,7 @@ export class Product {
     this.slug = props.slug;
     this.name = props.name;
     this.description = props.description;
+    this.translations = props.translations;
     this.price = props.price;
     this.previousPrice = props.previousPrice;
     this.category = props.category;
@@ -126,6 +135,18 @@ export class Product {
     const badge = props.badge?.trim() ?? null;
 
     return new Product({ ...props, name, description, badge: badge || null });
+  }
+
+  /** Nombre y descripción en el idioma pedido, cayendo al español por campo. */
+  textFor(locale: string): { name: string; description: string } {
+    if (locale !== 'pt' || !this.translations) {
+      return { name: this.name, description: this.description };
+    }
+
+    return {
+      name: this.translations.name ?? this.name,
+      description: this.translations.description ?? this.description,
+    };
   }
 
   // ── Venta ─────────────────────────────────────────────────────────────
@@ -202,6 +223,7 @@ export class Product {
       slug: this.slug,
       name: this.name,
       description: this.description,
+      translations: this.translations,
       price: this.price,
       previousPrice: this.previousPrice,
       category: this.category,

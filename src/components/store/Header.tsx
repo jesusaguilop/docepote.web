@@ -7,17 +7,20 @@ import { motion, useScroll, useSpring } from 'motion/react';
 import { Logo } from '@/components/brand/Logo';
 import { CartButton } from './CartButton';
 import { MobileMenu, type NavLink } from './MobileMenu';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { useTranslation } from '@/lib/i18n/context';
 import { cn } from '@/lib/cn';
 
-const NAV_LINKS: readonly NavLink[] = [
-  { href: '/catalogo', label: 'Catálogo' },
-  { href: '/#sabores', label: 'Sabores' },
-  { href: '/#historia', label: 'Nosotros' },
-  { href: '/#horario', label: 'Horario' },
-];
-
 export function Header({ whatsappNumber }: { whatsappNumber: string }) {
+  const { t } = useTranslation();
   const pathname = usePathname();
+
+  const navLinks: readonly NavLink[] = [
+    { href: '/catalogo', label: t.nav.catalogo },
+    { href: '/#sabores', label: t.nav.sabores },
+    { href: '/#historia', label: t.nav.nosotros },
+    { href: '/#horario', label: t.nav.horario },
+  ];
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -50,7 +53,7 @@ export function Header({ whatsappNumber }: { whatsappNumber: string }) {
           <Logo />
 
           <ul className="hidden items-center gap-9 font-display text-[0.94rem] font-semibold text-ink-soft md:flex">
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
@@ -63,7 +66,8 @@ export function Header({ whatsappNumber }: { whatsappNumber: string }) {
             ))}
           </ul>
 
-          <div className="flex items-center gap-1.5 md:gap-4">
+          <div className="flex items-center gap-1.5 md:gap-3">
+            <LanguageSwitcher className="hidden sm:flex" />
             <CartButton />
 
             <button
@@ -71,7 +75,7 @@ export function Header({ whatsappNumber }: { whatsappNumber: string }) {
               onClick={() => setMenuOpen(true)}
               // 44px de lado: el mínimo cómodo para un dedo.
               className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ink transition-colors active:bg-paper-2 md:hidden"
-              aria-label="Abrir menú"
+              aria-label={t.nav.abrirMenu}
               aria-expanded={menuOpen}
             >
               <svg
@@ -99,7 +103,7 @@ export function Header({ whatsappNumber }: { whatsappNumber: string }) {
       <MobileMenu
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
-        links={NAV_LINKS}
+        links={navLinks}
         whatsappNumber={whatsappNumber}
       />
     </>

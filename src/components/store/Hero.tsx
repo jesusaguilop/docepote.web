@@ -4,12 +4,14 @@ import Image from 'next/image';
 import { motion, useReducedMotion, useScroll, useTransform } from 'motion/react';
 import { useRef } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
+import { useTranslation } from '@/lib/i18n/context';
 
 interface HeroProps {
   whatsappNumber: string;
 }
 
 export function Hero({ whatsappNumber }: HeroProps) {
+  const { t } = useTranslation();
   const sectionRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
 
@@ -38,7 +40,7 @@ export function Hero({ whatsappNumber }: HeroProps) {
             transition={{ duration: 0.55 }}
             className="font-display text-[0.95rem] font-semibold text-paper"
           >
-            Doceria artesanal &middot; Valledupar
+            {t.hero.kicker}
           </motion.p>
 
           <motion.h1
@@ -47,7 +49,7 @@ export function Hero({ whatsappNumber }: HeroProps) {
             transition={{ duration: 0.65, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
             className="mt-5 max-w-[11.5ch] text-[clamp(2.5rem,4.4vw,3.9rem)] font-bold leading-[1.04] text-white"
           >
-            Un pedacito de Brasil en cada bocado.
+            {t.hero.titulo}
           </motion.h1>
 
           <motion.p
@@ -56,8 +58,7 @@ export function Hero({ whatsappNumber }: HeroProps) {
             transition={{ duration: 0.6, delay: 0.18 }}
             className="mt-6 max-w-[44ch] text-[1.08rem] leading-relaxed text-paper"
           >
-            Capas de bizcocho y brigadeiro montadas a mano dentro de un potecito.
-            Seis sabores, en versión individual, mini o kit para tus eventos.
+            {t.hero.lead}
           </motion.p>
 
           <motion.div
@@ -67,7 +68,7 @@ export function Hero({ whatsappNumber }: HeroProps) {
             className="mt-9 flex flex-wrap items-center gap-6"
           >
             <ButtonLink href="/catalogo" variant="solid">
-              Ver catálogo
+              {t.hero.verCatalogo}
             </ButtonLink>
             <a
               href={`https://wa.me/${whatsappNumber}`}
@@ -75,7 +76,7 @@ export function Hero({ whatsappNumber }: HeroProps) {
               rel="noopener noreferrer"
               className="border-b border-white/55 py-3.5 font-display font-semibold text-white transition-colors hover:border-white"
             >
-              Pedir por WhatsApp
+              {t.nav.pedirWhatsApp}
             </a>
           </motion.div>
         </motion.div>
@@ -97,7 +98,7 @@ export function Hero({ whatsappNumber }: HeroProps) {
             />
             <Image
               src="/brand/hero-mascot.jpg"
-              alt="El gato de Doce pote abrazando un pote de dulce"
+              alt={t.hero.mascotaAlt}
               width={615}
               height={824}
               priority
@@ -105,7 +106,7 @@ export function Hero({ whatsappNumber }: HeroProps) {
               sizes="(max-width: 1024px) 90vw, 380px"
             />
             <p className="py-3 text-center font-script text-2xl text-ink-soft">
-              Empaque original
+              {t.hero.empaqueOriginal}
             </p>
           </motion.div>
         </motion.div>

@@ -17,8 +17,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -35,7 +35,14 @@ model Flavor {
   summary     String
   /// Qué lleva por dentro, capa por capa. null si no está documentado.
   composition String?
-  position    Int     @default(0)
+
+  /// Traducciones al portugués. La marca es brasileña y parte de su público
+  /// lo lee mejor. null = se muestra el texto en español.
+  namePt        String?
+  summaryPt     String?
+  compositionPt String?
+
+  position Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -46,34 +53,38 @@ model Flavor {
 }
 
 model Product {
-  id          String  @id
-  slug        String  @unique
+  id          String @id
+  slug        String @unique
   name        String
   description String
+
+  /// Traducciones al portugués; null = se muestra el texto en español.
+  namePt        String?
+  descriptionPt String?
   /// Precio vigente, en pesos colombianos (entero, sin decimales).
-  price       Int
+  price         Int
   /// Precio anterior tachado. null cuando no hay oferta. Siempre > price.
   previousPrice Int?
   /// "individual" | "mini" | "combo" | "eventos" — validado por parseCategory().
-  category    String
+  category      String
   /// Sabor de la casa. null en combos y kits, que llevan varios.
-  flavorId    String?
+  flavorId      String?
   /// Etiqueta opcional de la tarjeta: "Más pedido", "Nuevo", "Temporada".
-  badge       String?
+  badge         String?
   /// Color del contenido del pote, en hexadecimal.
-  fillColor   String
+  fillColor     String
   /// "wave" | "dots" | "drop" — patrón dibujado sobre el pote.
-  pattern     String
-  imageUrl    String?
+  pattern       String
+  imageUrl      String?
   /// Tamaño del pote en onzas. null si no aplica.
-  sizeOz      Float?
+  sizeOz        Float?
   /// Cuántos potes trae. null para productos de una sola unidad.
-  units       Int?
-  active      Boolean @default(true)
+  units         Int?
+  active        Boolean @default(true)
   /// null = se hace por encargo, sin control de inventario.
-  stock       Int?
+  stock         Int?
   /// Orden manual en la grilla del catálogo.
-  position    Int     @default(0)
+  position      Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

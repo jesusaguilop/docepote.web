@@ -47,6 +47,7 @@ const buildProduct = (id: string, price: number, stock: number | null) =>
     slug: Slug.of(`producto-${id}`),
     name: `Producto ${id}`,
     description: 'Descripción de prueba.',
+    translations: null,
     price: Money.of(price),
     previousPrice: null,
     category: 'individual',

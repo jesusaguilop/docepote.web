@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCart } from './cart-context';
 import { useToast } from '@/components/ui/Toast';
+import { useTranslation } from '@/lib/i18n/context';
 import { cn } from '@/lib/cn';
 import type { ProductDTO } from '@core/application/dto/product.dto';
 
@@ -26,6 +27,7 @@ export function AddToCartButton({
 }: AddToCartButtonProps) {
   const { add, openDrawer } = useCart();
   const { notify } = useToast();
+  const { t, fill } = useTranslation();
   const [justAdded, setJustAdded] = useState(false);
 
   if (!product.purchasable) {
@@ -36,14 +38,14 @@ export function AddToCartButton({
           layout === 'full' && 'w-full py-3.5 text-[0.98rem]',
         )}
       >
-        {product.soldOut ? 'Agotado por hoy' : 'No disponible'}
+        {product.soldOut ? t.producto.agotado : t.producto.noDisponible}
       </span>
     );
   }
 
   const handleAdd = () => {
     add(product.id, quantity);
-    notify(`${product.name} — agregado al carrito`);
+    notify(fill(t.producto.agregadoToast, { nombre: product.name }));
 
     setJustAdded(true);
     setTimeout(() => setJustAdded(false), CONFIRMATION_MS);
@@ -65,7 +67,7 @@ export function AddToCartButton({
           ? 'w-full py-3.5 text-[0.98rem]'
           : 'min-h-11 px-4 py-2 text-[0.86rem]',
       )}
-      aria-label={`Agregar ${product.name} al carrito`}
+      aria-label={fill(t.producto.agregarAria, { nombre: product.name })}
     >
       {/* El texto se sustituye en su lugar para que el botón no cambie de tamaño. */}
       <AnimatePresence mode="popLayout" initial={false}>
@@ -77,7 +79,7 @@ export function AddToCartButton({
           transition={{ duration: 0.2 }}
           className="flex items-center gap-1.5"
         >
-          {justAdded ? 'Agregado' : 'Agregar'}
+          {justAdded ? t.producto.agregado : t.producto.agregar}
         </motion.span>
       </AnimatePresence>
     </motion.button>

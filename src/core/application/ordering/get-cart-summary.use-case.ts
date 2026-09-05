@@ -49,6 +49,7 @@ export interface CartSummaryDTO {
 export interface GetCartSummaryInput {
   readonly items: readonly CartItem[];
   readonly fulfillmentMethod?: string;
+  readonly locale?: string;
 }
 
 export class GetCartSummaryUseCase {
@@ -81,6 +82,7 @@ export class GetCartSummaryUseCase {
         product: toProductDTO(
           product,
           product.flavorId ? flavorsById.get(product.flavorId) ?? null : null,
+          input.locale,
         ),
         quantity,
         subtotal: subtotal.amount,

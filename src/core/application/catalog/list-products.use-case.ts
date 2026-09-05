@@ -1,6 +1,6 @@
 import type { ProductReader, ProductQuery } from '@core/domain/catalog/product.repository';
 import type { FlavorReader } from '@core/domain/catalog/flavor.repository';
-import { toProductDTOs, type ProductDTO } from '../dto/product.dto';
+import { toFlavorDTO, toProductDTOs, type ProductDTO } from '../dto/product.dto';
 import { Ok, type Result } from '@core/domain/shared/result';
 import type { DomainError } from '@core/domain/shared/errors';
 import { isCategory } from '@core/domain/catalog/category';
@@ -11,6 +11,8 @@ export interface ListProductsInput {
   readonly search?: string;
   /** El catálogo público pasa `true`; el panel pasa `false` para ver también los ocultos. */
   readonly onlyActive?: boolean;
+  /** Idioma en el que se devuelven nombres y descripciones. */
+  readonly locale?: string;
 }
 
 /**
@@ -34,7 +36,7 @@ export class ListProductsUseCase {
     const found = await this.products.findAll(query);
     const flavorsById = await loadFlavorIndex(this.flavors, found);
 
-    return Ok(toProductDTOs(found, flavorsById));
+    return Ok(toProductDTOs(found, flavorsById, input.locale));
   }
 }
 
@@ -42,18 +44,8 @@ export class ListProductsUseCase {
 export class ListFlavorsUseCase {
   constructor(private readonly flavors: FlavorReader) {}
 
-  async execute() {
+  async execute(locale = 'es') {
     const found = await this.flavors.findAll();
-    return Ok(
-      found.map((flavor) => ({
-        id: flavor.id,
-        slug: flavor.slug.value,
-        name: flavor.name,
-        emoji: flavor.emoji,
-        displayName: flavor.displayName,
-        summary: flavor.summary,
-        composition: flavor.composition,
-      })),
-    );
+    return Ok(found.map((flavor) => toFlavorDTO(flavor, locale)));
   }
 }

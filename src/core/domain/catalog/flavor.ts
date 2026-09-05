@@ -21,7 +21,19 @@ export interface FlavorProps {
   readonly summary: string;
   /** Qué lleva por dentro, capa por capa. `null` si aún no está documentado. */
   readonly composition: string | null;
+  /**
+   * Traducción al portugués. `null` en cualquier campo significa "no
+   * traducido": se muestra el español, que es el idioma canónico. Así una
+   * traducción a medias degrada campo por campo en vez de dejar huecos.
+   */
+  readonly translations: FlavorTranslation | null;
   readonly position: number;
+}
+
+export interface FlavorTranslation {
+  readonly name: string | null;
+  readonly summary: string | null;
+  readonly composition: string | null;
 }
 
 const MAX_SUMMARY_LENGTH = 200;
@@ -34,6 +46,7 @@ export class Flavor {
   readonly emoji: string;
   readonly summary: string;
   readonly composition: string | null;
+  readonly translations: FlavorTranslation | null;
   readonly position: number;
 
   private constructor(props: FlavorProps) {
@@ -43,6 +56,7 @@ export class Flavor {
     this.emoji = props.emoji;
     this.summary = props.summary;
     this.composition = props.composition;
+    this.translations = props.translations;
     this.position = props.position;
     Object.freeze(this);
   }
@@ -75,5 +89,24 @@ export class Flavor {
   /** "🍫 Chocolatudo" — para listados compactos. */
   get displayName(): string {
     return this.emoji ? `${this.emoji} ${this.name}` : this.name;
+  }
+
+  /**
+   * Textos en el idioma pedido, cayendo al español campo por campo.
+   *
+   * Se prefiere degradar un campo suelto antes que mostrar la ficha entera en
+   * otro idioma: un sabor con el nombre traducido y la receta todavía en
+   * español se lee bien; uno mitad y mitad al azar, no.
+   */
+  textFor(locale: string): { name: string; summary: string; composition: string | null } {
+    if (locale !== 'pt' || !this.translations) {
+      return { name: this.name, summary: this.summary, composition: this.composition };
+    }
+
+    return {
+      name: this.translations.name ?? this.name,
+      summary: this.translations.summary ?? this.summary,
+      composition: this.translations.composition ?? this.composition,
+    };
   }
 }

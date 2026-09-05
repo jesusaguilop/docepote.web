@@ -12,6 +12,8 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'motion/react';
+import { LanguageSwitcher } from './LanguageSwitcher';
+import { useTranslation } from '@/lib/i18n/context';
 
 export interface NavLink {
   href: string;
@@ -26,6 +28,7 @@ interface MobileMenuProps {
 }
 
 export function MobileMenu({ open, onClose, links, whatsappNumber }: MobileMenuProps) {
+  const { t } = useTranslation();
   // Cerrar con Escape y bloquear el scroll del fondo mientras está abierto.
   useEffect(() => {
     if (!open) return;
@@ -66,7 +69,7 @@ export function MobileMenu({ open, onClose, links, whatsappNumber }: MobileMenuP
             transition={{ type: 'spring', stiffness: 320, damping: 34 }}
             role="dialog"
             aria-modal="true"
-            aria-label="Menú"
+            aria-label={t.nav.abrirMenu}
           >
             <div className="flex h-[72px] items-center justify-between border-b border-kraft-line px-5">
               <span className="flex items-center gap-2.5">
@@ -86,7 +89,7 @@ export function MobileMenu({ open, onClose, links, whatsappNumber }: MobileMenuP
                 type="button"
                 onClick={onClose}
                 className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-2xl text-ink-soft transition-colors hover:bg-paper-2 hover:text-ink"
-                aria-label="Cerrar menú"
+                aria-label={t.nav.cerrarMenu}
               >
                 &#10005;
               </button>
@@ -125,8 +128,15 @@ export function MobileMenu({ open, onClose, links, whatsappNumber }: MobileMenuP
                 onClick={onClose}
                 className="mt-5 flex h-13 items-center justify-center gap-2 rounded-sm bg-green-deep py-3.5 font-display font-semibold text-white"
               >
-                Pedir por WhatsApp
+                {t.nav.pedirWhatsApp}
               </motion.a>
+
+              {/* En móvil el conmutador del header se oculta por espacio,
+                  así que su sitio es aquí dentro. */}
+              <div className="mt-6 flex items-center justify-center gap-3 border-t border-kraft-line/40 pt-5 sm:hidden">
+                <span className="text-[0.8rem] text-ink-soft">{t.nav.idioma}</span>
+                <LanguageSwitcher />
+              </div>
             </nav>
           </motion.div>
         </>

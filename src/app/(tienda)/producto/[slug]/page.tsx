@@ -5,8 +5,9 @@ import { container } from '@infra/container';
 import { ProductDetail } from '@/components/store/ProductDetail';
 import { ProductCard } from '@/components/store/ProductCard';
 import { Reveal, RevealGroup, RevealItem } from '@/components/ui/Reveal';
+import { getTranslations } from '@/lib/i18n/server';
 
-export const revalidate = 60;
+export const dynamic = 'force-dynamic';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -33,25 +34,26 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
   const { catalog } = container();
+  const { locale, t } = await getTranslations();
 
-  const result = await catalog.getBySlug.execute(slug);
+  const result = await catalog.getBySlug.execute(slug, locale);
   if (!result.ok) notFound();
 
   const product = result.value;
-  const relatedResult = await catalog.getRelated.execute(slug, 3);
+  const relatedResult = await catalog.getRelated.execute(slug, 3, locale);
   const related = relatedResult.ok ? relatedResult.value : [];
 
   return (
     <div className="wrap py-12">
       <nav aria-label="Ruta de navegación" className="mb-10 text-[0.86rem] text-ink-soft">
         <Link href="/" className="transition-colors hover:text-ink">
-          Inicio
+          {t.nav.inicio}
         </Link>
         <span className="mx-2" aria-hidden>
           /
         </span>
         <Link href="/catalogo" className="transition-colors hover:text-ink">
-          Catálogo
+          {t.nav.catalogo}
         </Link>
         <span className="mx-2" aria-hidden>
           /
@@ -65,13 +67,13 @@ export default async function ProductPage({ params }: PageProps) {
         <section className="mt-24 border-t border-kraft-line/60 pt-16">
           <Reveal>
             <h2 className="mb-10 text-[clamp(1.5rem,2.4vw,2rem)] font-bold">
-              También te puede gustar
+              {t.producto.tambienTeGusta}
             </h2>
           </Reveal>
 
-          <RevealGroup className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <RevealGroup className="grid auto-rows-fr gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {related.map((item) => (
-              <RevealItem key={item.id}>
+              <RevealItem key={item.id} className="h-full">
                 <ProductCard product={item} />
               </RevealItem>
             ))}

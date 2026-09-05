@@ -41,6 +41,11 @@ export function toFlavorEntity(row: FlavorRow): Flavor {
     emoji: row.emoji,
     summary: row.summary,
     composition: row.composition,
+    translations: {
+      name: row.namePt,
+      summary: row.summaryPt,
+      composition: row.compositionPt,
+    },
     position: row.position,
   });
 }
@@ -53,6 +58,9 @@ export function toFlavorRow(flavor: Flavor) {
     emoji: flavor.emoji,
     summary: flavor.summary,
     composition: flavor.composition,
+    namePt: flavor.translations?.name ?? null,
+    summaryPt: flavor.translations?.summary ?? null,
+    compositionPt: flavor.translations?.composition ?? null,
     position: flavor.position,
   };
 }
@@ -63,6 +71,7 @@ export function toProductEntity(row: ProductRow): Product {
     slug: Slug.of(row.slug),
     name: row.name,
     description: row.description,
+    translations: { name: row.namePt, description: row.descriptionPt },
     price: Money.of(row.price),
     previousPrice: row.previousPrice === null ? null : Money.of(row.previousPrice),
     category: parseCategory(row.category),
@@ -84,6 +93,8 @@ export function toProductRow(product: Product) {
     slug: product.slug.value,
     name: product.name,
     description: product.description,
+    namePt: product.translations?.name ?? null,
+    descriptionPt: product.translations?.description ?? null,
     price: product.price.amount,
     previousPrice: product.previousPrice?.amount ?? null,
     category: product.category,

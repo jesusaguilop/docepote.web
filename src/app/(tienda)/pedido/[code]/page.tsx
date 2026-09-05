@@ -7,6 +7,10 @@ import { OrderTracker } from '@/components/store/OrderTracker';
 import { Confetti } from '@/components/store/Confetti';
 import { ButtonLink } from '@/components/ui/Button';
 import type { JarPattern } from '@/components/brand/JarIcon';
+import { getTranslations } from '@/lib/i18n/server';
+import { interpolate } from '@/lib/i18n';
+import type { OrderStatus } from '@core/domain/ordering/order-status';
+import type { FulfillmentMethod } from '@core/domain/ordering/fulfillment';
 
 export const metadata: Metadata = {
   title: 'Tu pedido',
@@ -24,6 +28,7 @@ interface PageProps {
 export default async function OrderPage({ params }: PageProps) {
   const { code } = await params;
   const { ordering, config } = container();
+  const { t } = await getTranslations();
 
   const result = await ordering.getByCode.execute(code);
   if (!result.ok) notFound();
@@ -31,21 +36,48 @@ export default async function OrderPage({ params }: PageProps) {
   const order = result.value;
   const justPlaced = order.status === 'pending';
 
+  /* El DTO trae la etiqueta de estado y de entrega ya resueltas en español,
+     porque el dominio no sabe de idiomas. Se traducen aquí, en la frontera de
+     presentación, que es donde corresponde. */
+  const statusLabel: Record<OrderStatus, string> = {
+    pending: t.pedido.pasos.recibido,
+    confirmed: t.pedido.pasos.confirmado,
+    preparing: t.pedido.pasos.preparacion,
+    ready: t.pedido.pasos.listo,
+    delivered: t.pedido.pasos.entregado,
+    cancelled: t.pedido.cancelado,
+  };
+
+  const fulfillmentLabel: Record<FulfillmentMethod, string> = {
+    pickup: t.entrega.pickup,
+    delivery: t.entrega.delivery,
+  };
+
+  /* "Gratis" solo si de verdad había envío que regalar. */
+  const deliveryLabel =
+    order.fulfillmentMethod === 'pickup'
+      ? t.entrega.sinCosto
+      : order.deliveryFee === 0
+        ? t.entrega.gratis
+        : order.deliveryFeeFormatted;
+
   return (
     <div className="wrap max-w-3xl py-16">
       {justPlaced && <Confetti />}
 
       <header className="text-center">
         <p className="font-script text-4xl text-green-deep">
-          {justPlaced ? '¡Gracias!' : 'Tu pedido'}
+          {justPlaced ? t.pedido.gracias : t.pedido.tuPedido}
         </p>
         <h1 className="mt-3 text-[clamp(1.8rem,3.2vw,2.4rem)] font-bold">
-          Pedido {order.code}
+          {interpolate(t.pedido.numero, { codigo: order.code })}
         </h1>
         <p className="mt-3 text-[0.98rem] text-ink-soft">
           {justPlaced
-            ? `Ya nos llegó, ${order.customer.name.split(' ')[0]}. Te confirmamos por WhatsApp en un momento.`
-            : `Estado actual: ${order.statusLabel}.`}
+            ? interpolate(t.pedido.recibido, {
+                nombre: order.customer.name.split(' ')[0] ?? order.customer.name,
+              })
+            : interpolate(t.pedido.estadoActual, { estado: statusLabel[order.status] })}
         </p>
       </header>
 
@@ -55,7 +87,7 @@ export default async function OrderPage({ params }: PageProps) {
 
       <section className="mt-8 rounded-md border border-kraft-line bg-white">
         <h2 className="border-b border-kraft-line/60 px-6 py-4 font-display text-[1.05rem] font-bold">
-          Lo que pediste
+          {t.pedido.loQuePediste}
         </h2>
 
         <ul className="divide-y divide-kraft-line/40 px-6">
@@ -84,17 +116,17 @@ export default async function OrderPage({ params }: PageProps) {
 
         <dl className="space-y-2 border-t border-kraft-line/60 px-6 py-5 text-[0.92rem]">
           <div className="flex justify-between">
-            <dt className="text-ink-soft">Subtotal</dt>
+            <dt className="text-ink-soft">{t.pedido.subtotal}</dt>
             <dd className="font-semibold">{order.subtotalFormatted}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-ink-soft">{order.fulfillmentLabel}</dt>
+            <dt className="text-ink-soft">{fulfillmentLabel[order.fulfillmentMethod]}</dt>
             <dd className={order.hasFreeDelivery ? 'font-semibold text-green-deep' : 'font-semibold'}>
-              {order.deliveryFeeFormatted}
+              {deliveryLabel}
             </dd>
           </div>
           <div className="flex justify-between border-t border-kraft-line/60 pt-3 font-display">
-            <dt className="text-[1rem] font-bold">Total</dt>
+            <dt className="text-[1rem] font-bold">{t.pedido.total}</dt>
             <dd className="text-[1.3rem] font-bold">{order.totalFormatted}</dd>
           </div>
         </dl>
@@ -103,7 +135,7 @@ export default async function OrderPage({ params }: PageProps) {
       <section className="mt-6 grid gap-4 rounded-md border border-kraft-line bg-paper-2/50 px-6 py-6 sm:grid-cols-2">
         <div>
           <h3 className="font-display text-[0.8rem] font-bold uppercase tracking-wider text-ink-soft">
-            Datos de entrega
+            {t.pedido.datosEntrega}
           </h3>
           <p className="mt-2 text-[0.92rem]">{order.customer.name}</p>
           <p className="text-[0.92rem] text-ink-soft">{order.customer.phoneFormatted}</p>
@@ -115,7 +147,7 @@ export default async function OrderPage({ params }: PageProps) {
         {order.customer.notes && (
           <div>
             <h3 className="font-display text-[0.8rem] font-bold uppercase tracking-wider text-ink-soft">
-              Notas
+              {t.pedido.notas}
             </h3>
             <p className="mt-2 text-[0.92rem] text-ink-soft">{order.customer.notes}</p>
           </div>
@@ -124,21 +156,21 @@ export default async function OrderPage({ params }: PageProps) {
 
       <div className="mt-10 flex flex-col items-center gap-4 text-center">
         <p className="text-[0.88rem] text-ink-soft">
-          Guarda este enlace para seguir tu pedido cuando quieras.
+          {t.pedido.guardaEnlace}
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <ButtonLink href="/catalogo" variant="outline" size="sm">
-            Seguir comprando
+            {t.pedido.seguirComprando}
           </ButtonLink>
           <Link
             href={`https://wa.me/${config.WHATSAPP_NUMBER}?text=${encodeURIComponent(
-              `Hola, pregunto por mi pedido ${order.code}`,
+              interpolate(t.pedido.consultaWhatsApp, { codigo: order.code }),
             )}`}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center rounded-sm bg-green-deep px-4 py-2 font-display text-sm font-semibold text-white transition-colors hover:bg-green-dark"
           >
-            Escribir por WhatsApp
+            {t.pedido.escribirWhatsApp}
           </Link>
         </div>
       </div>

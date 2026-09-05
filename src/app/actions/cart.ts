@@ -9,6 +9,7 @@
  */
 
 import { container } from '@infra/container';
+import { getLocale } from '@/lib/i18n/server';
 import { guard, type ActionResult } from '@/lib/action-result';
 import type { CartItem } from '@core/domain/ordering/cart';
 import type { CartSummaryDTO } from '@core/application/ordering/get-cart-summary.use-case';
@@ -17,7 +18,11 @@ export async function getCartSummary(
   items: CartItem[],
   fulfillmentMethod?: string,
 ): Promise<ActionResult<CartSummaryDTO>> {
+  // El idioma sale de la cookie aquí mismo: el cliente no tiene que
+  // acordarse de mandarlo, y así no puede quedar desincronizado.
+  const locale = await getLocale();
+
   return guard(() =>
-    container().ordering.cartSummary.execute({ items, fulfillmentMethod }),
+    container().ordering.cartSummary.execute({ items, fulfillmentMethod, locale }),
   );
 }

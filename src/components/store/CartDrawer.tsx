@@ -17,9 +17,11 @@ import type { CartSummaryDTO } from '@core/application/ordering/get-cart-summary
 import { JarIcon } from '@/components/brand/JarIcon';
 import { ButtonLink } from '@/components/ui/Button';
 import { QuantityStepper } from './QuantityStepper';
+import { useTranslation } from '@/lib/i18n/context';
 
 export function CartDrawer() {
   const { isDrawerOpen, closeDrawer, items, setQuantity, remove, ready } = useCart();
+  const { t, fill } = useTranslation();
   const [summary, setSummary] = useState<CartSummaryDTO | null>(null);
   const [isPending, startTransition] = useTransition();
 
@@ -82,15 +84,15 @@ export function CartDrawer() {
             transition={{ type: 'spring', stiffness: 320, damping: 36 }}
             role="dialog"
             aria-modal="true"
-            aria-label="Tu carrito"
+            aria-label={t.carrito.titulo}
           >
             <header className="flex items-center justify-between border-b border-kraft-line px-6 py-5">
-              <h2 className="font-display text-xl font-bold">Tu carrito</h2>
+              <h2 className="font-display text-xl font-bold">{t.carrito.titulo}</h2>
               <button
                 type="button"
                 onClick={closeDrawer}
                 className="flex h-9 w-9 items-center justify-center rounded-full text-xl text-ink-soft transition-colors hover:bg-paper-2 hover:text-ink"
-                aria-label="Cerrar carrito"
+                aria-label={t.carrito.cerrar}
               >
                 &#10005;
               </button>
@@ -124,12 +126,12 @@ export function CartDrawer() {
                             {line.product.name}
                           </h3>
                           <p className="mt-0.5 text-[0.8rem] text-ink-soft">
-                            {line.product.priceFormatted} c/u
+                            {line.product.priceFormatted} {t.producto.cadaUno}
                           </p>
 
                           {line.exceedsStock && (
                             <p className="mt-1 text-[0.78rem] font-semibold text-berry">
-                              Solo quedan {line.maxAvailable}
+                              {fill(t.carrito.soloQuedan, { n: line.maxAvailable ?? 0 })}
                             </p>
                           )}
 
@@ -144,7 +146,7 @@ export function CartDrawer() {
                               onClick={() => remove(line.product.id)}
                               className="text-[0.78rem] text-ink-soft underline-offset-2 transition-colors hover:text-berry hover:underline"
                             >
-                              Quitar
+                              {t.carrito.quitar}
                             </button>
                           </div>
                         </div>
@@ -160,7 +162,7 @@ export function CartDrawer() {
 
               {summary && summary.removedProductIds.length > 0 && (
                 <p className="mb-4 rounded-md bg-berry/10 px-4 py-3 text-[0.82rem] text-berry">
-                  Quitamos productos que ya no están disponibles.
+                  {t.carrito.retirados}
                 </p>
               )}
             </div>
@@ -169,14 +171,14 @@ export function CartDrawer() {
               <footer className="border-t border-kraft-line bg-paper-2/60 px-6 py-5">
                 {summary.missingForFreeDeliveryFormatted && (
                   <p className="mb-3 text-center text-[0.82rem] text-ink-soft">
-                    Te faltan{' '}
-                    <b className="text-green-deep">{summary.missingForFreeDeliveryFormatted}</b>{' '}
-                    para el domicilio gratis
+                    {fill(t.carrito.faltanParaGratis, {
+                      monto: summary.missingForFreeDeliveryFormatted,
+                    })}
                   </p>
                 )}
 
                 <div className="mb-4 flex items-center justify-between font-display">
-                  <span className="text-[0.95rem] font-semibold text-ink-soft">Subtotal</span>
+                  <span className="text-[0.95rem] font-semibold text-ink-soft">{t.carrito.subtotal}</span>
                   <motion.span
                     key={summary.subtotal}
                     initial={{ scale: 1.12 }}
@@ -194,11 +196,11 @@ export function CartDrawer() {
                   variant="solid"
                   className="w-full"
                 >
-                  Finalizar pedido
+                  {t.carrito.finalizar}
                 </ButtonLink>
 
                 <p className="mt-3 text-center text-[0.76rem] text-ink-soft">
-                  El domicilio se calcula en el siguiente paso.
+                  {t.carrito.domicilioDespues}
                 </p>
               </footer>
             )}
@@ -223,6 +225,8 @@ export function CartDrawer() {
 }
 
 function EmptyCart({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
+
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 py-16 text-center">
       <motion.div
@@ -232,16 +236,16 @@ function EmptyCart({ onClose }: { onClose: () => void }) {
       >
         <JarIcon fillColor="#e8dfc6" pattern="drop" />
       </motion.div>
-      <p className="font-script text-3xl text-ink-soft">Aún vacío...</p>
+      <p className="font-script text-3xl text-ink-soft">{t.carrito.vacio}</p>
       <p className="max-w-[24ch] text-[0.9rem] text-ink-soft">
-        Agrega un pote a tu carrito y te lo dejamos listo.
+        {t.carrito.vacioLead}
       </p>
       <Link
         href="/catalogo"
         onClick={onClose}
         className="mt-2 font-display text-[0.9rem] font-semibold text-green-deep underline underline-offset-4"
       >
-        Ver el catálogo
+        {t.carrito.verCatalogo}
       </Link>
     </div>
   );

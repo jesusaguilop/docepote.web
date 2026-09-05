@@ -55,15 +55,17 @@ export interface ProductDTO {
   readonly lowStock: boolean;
 }
 
-export function toFlavorDTO(flavor: Flavor): FlavorDTO {
+export function toFlavorDTO(flavor: Flavor, locale = 'es'): FlavorDTO {
+  const text = flavor.textFor(locale);
+
   return {
     id: flavor.id,
     slug: flavor.slug.value,
-    name: flavor.name,
+    name: text.name,
     emoji: flavor.emoji,
-    displayName: flavor.displayName,
-    summary: flavor.summary,
-    composition: flavor.composition,
+    displayName: flavor.emoji ? `${flavor.emoji} ${text.name}` : text.name,
+    summary: text.summary,
+    composition: text.composition,
   };
 }
 
@@ -71,15 +73,20 @@ export function toFlavorDTO(flavor: Flavor): FlavorDTO {
  * El sabor llega por separado porque vive en otra tabla: quien construye el
  * DTO ya lo cargó (en lote, no uno por uno) y lo inyecta aquí.
  */
-export function toProductDTO(product: Product, flavor: Flavor | null = null): ProductDTO {
+export function toProductDTO(
+  product: Product,
+  flavor: Flavor | null = null,
+  locale = 'es',
+): ProductDTO {
   const savings = product.savings;
   const perUnit = product.pricePerUnit;
+  const text = product.textFor(locale);
 
   return {
     id: product.id,
     slug: product.slug.value,
-    name: product.name,
-    description: product.description,
+    name: text.name,
+    description: text.description,
 
     price: product.price.amount,
     priceFormatted: product.price.format(),
@@ -89,7 +96,7 @@ export function toProductDTO(product: Product, flavor: Flavor | null = null): Pr
     pricePerUnitFormatted: perUnit ? perUnit.format() : null,
 
     category: product.category,
-    flavor: flavor ? toFlavorDTO(flavor) : null,
+    flavor: flavor ? toFlavorDTO(flavor, locale) : null,
     badge: product.badge,
     art: { fillColor: product.art.fillColor, pattern: product.art.pattern },
     imageUrl: product.imageUrl,
@@ -113,8 +120,13 @@ export function toProductDTO(product: Product, flavor: Flavor | null = null): Pr
 export function toProductDTOs(
   products: readonly Product[],
   flavorsById: ReadonlyMap<string, Flavor> = new Map(),
+  locale = 'es',
 ): ProductDTO[] {
   return products.map((product) =>
-    toProductDTO(product, product.flavorId ? flavorsById.get(product.flavorId) ?? null : null),
+    toProductDTO(
+      product,
+      product.flavorId ? flavorsById.get(product.flavorId) ?? null : null,
+      locale,
+    ),
   );
 }

@@ -2,6 +2,7 @@
 
 import { motion } from 'motion/react';
 import { MAX_QUANTITY_PER_LINE } from '@core/domain/shared/quantity';
+import { useTranslation } from '@/lib/i18n/context';
 
 interface QuantityStepperProps {
   value: number;
@@ -13,6 +14,7 @@ interface QuantityStepperProps {
 
 /** Control de cantidad. El tope real lo marca el stock, no la interfaz. */
 export function QuantityStepper({ value, max, onChange, size = 'sm' }: QuantityStepperProps) {
+  const { t } = useTranslation();
   const ceiling = Math.min(max ?? MAX_QUANTITY_PER_LINE, MAX_QUANTITY_PER_LINE);
   const canIncrease = value < ceiling;
 
@@ -27,7 +29,7 @@ export function QuantityStepper({ value, max, onChange, size = 'sm' }: QuantityS
         whileTap={{ scale: 0.86 }}
         onClick={() => onChange(value - 1)}
         className={`${dimension} flex items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-paper-2 hover:text-ink`}
-        aria-label="Quitar una unidad"
+        aria-label={t.carrito.quitarUnidad}
       >
         &#8211;
       </motion.button>
@@ -45,7 +47,7 @@ export function QuantityStepper({ value, max, onChange, size = 'sm' }: QuantityS
         onClick={() => onChange(value + 1)}
         disabled={!canIncrease}
         className={`${dimension} flex items-center justify-center rounded-full text-ink-soft transition-colors hover:bg-paper-2 hover:text-ink disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent`}
-        aria-label="Agregar una unidad"
+        aria-label={t.carrito.agregarUnidad}
       >
         +
       </motion.button>
