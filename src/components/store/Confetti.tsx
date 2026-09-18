@@ -3,8 +3,20 @@
 import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
 
-/** Colores de la marca; nada de arcoíris genérico. */
-const COLORS = ['#7c9a34', '#9c6405', '#c7ae85', '#4c6420', '#8c2e2e'];
+/**
+ * Colores de la marca; nada de arcoíris genérico.
+ *
+ * Salen de los tokens y no de hexadecimales fijos para que el confeti caiga
+ * del color de la temporada: con la campaña de Amor y Amistad puesta, llueve
+ * rosado sin tocar este archivo.
+ */
+const COLORS = [
+  'var(--color-green)',
+  'var(--color-caramel)',
+  'var(--color-kraft)',
+  'var(--color-green-deep)',
+  'var(--color-berry)',
+];
 const PIECES = 34;
 
 interface Piece {

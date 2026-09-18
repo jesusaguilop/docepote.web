@@ -5,6 +5,7 @@ import { container } from '@infra/container';
 import { JarIcon } from '@/components/brand/JarIcon';
 import { OrderTracker } from '@/components/store/OrderTracker';
 import { Confetti } from '@/components/store/Confetti';
+import { PaymentHandoff } from '@/components/store/PaymentHandoff';
 import { ButtonLink } from '@/components/ui/Button';
 import type { JarPattern } from '@/components/brand/JarIcon';
 import { getTranslations } from '@/lib/i18n/server';
@@ -153,6 +154,10 @@ export default async function OrderPage({ params }: PageProps) {
           </div>
         )}
       </section>
+
+      {/* Si el navegador bloqueó la ventana de WhatsApp al confirmar, el
+          mensaje del pedido no salió: aquí se ofrece como botón. */}
+      <PaymentHandoff orderCode={order.code} />
 
       <div className="mt-10 flex flex-col items-center gap-4 text-center">
         <p className="text-[0.88rem] text-ink-soft">

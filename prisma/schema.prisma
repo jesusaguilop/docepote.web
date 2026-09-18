@@ -89,8 +89,9 @@ model Product {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  flavor     Flavor?     @relation(fields: [flavorId], references: [id], onDelete: SetNull)
+  flavor     Flavor?        @relation(fields: [flavorId], references: [id], onDelete: SetNull)
   orderLines OrderLine[]
+  images     ProductImage[]
 
   @@index([category, active])
   @@index([flavorId])
@@ -172,4 +173,71 @@ model Session {
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+/// Vestido de temporada: la paleta y la mascota con las que se viste la
+/// tienda. Existe para que una campaña —Amor y Amistad, Navidad, Halloween—
+/// no sea un commit: se arma desde el panel y se activa con un clic.
+///
+/// Solo una puede estar activa. Esa invariante la sostiene
+/// `ActivateSeasonUseCase` dentro de una transacción, no la base: un índice
+/// único parcial obligaría a apagar la anterior y prender la nueva en un
+/// orden concreto, y Prisma no expresa ese índice de forma portable.
+model Season {
+  id     String  @id
+  name   String
+  active Boolean @default(false)
+
+  /// Paleta en hexadecimal con "#". Los nombres calcan los tokens de
+  /// globals.css a propósito: inyectarlos en el navegador es entonces una
+  /// traducción directa, sin tabla de equivalencias que se desactualice.
+  ink        String
+  inkSoft    String
+  accent     String
+  accentDeep String
+  accentDark String
+  kraft      String
+  kraftDark  String
+  kraftLine  String
+  caramel    String
+  paper      String
+  paper2     String
+  berry      String
+
+  /// Mascota del hero, guardada aquí y no en disco: el sistema de archivos
+  /// de Vercel es de solo lectura, así que subir una imagen desde el panel
+  /// no puede terminar en /public. Se sirve por /api/marca/mascota.
+  mascotImage    Bytes?
+  mascotMimeType String?
+  mascotAlt      String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active])
+}
+
+/// Una foto del producto. Varias por producto forman el carrusel de la ficha.
+///
+/// Los bytes viven aquí y no en /public por lo mismo que la mascota: el disco
+/// de Vercel es de solo lectura, y subir una foto desde el panel no puede
+/// obligar a un despliegue. Se sirven por /api/productos/foto/[id] con una
+/// URL versionada, así que la caché puede ser eterna.
+model ProductImage {
+  id        String @id
+  productId String
+  /// Orden en el carrusel. La 0 es la que sale en la tarjeta del catálogo.
+  position  Int    @default(0)
+
+  image    Bytes
+  mimeType String
+  /// Qué se ve en la foto: lo leen los buscadores y los lectores de pantalla.
+  alt      String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId, position])
 }

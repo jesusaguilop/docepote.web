@@ -20,7 +20,8 @@ import {
 } from '@infra/auth/session-cookie';
 import { requireAdminForAction } from '@/lib/require-admin';
 import { guard, type ActionResult } from '@/lib/action-result';
-import type { ProductDTO } from '@core/application/dto/product.dto';
+import type { ProductDTO, ProductImageDTO } from '@core/application/dto/product.dto';
+import { parseImageMimeType } from '@core/domain/catalog/product-image';
 import type { OrderDTO } from '@core/application/dto/order.dto';
 import type { SaveProductInput } from '@core/application/catalog/save-product.use-case';
 
@@ -42,18 +43,45 @@ export async function login(
   const email = String(formData.get('email') ?? '');
   const password = String(formData.get('password') ?? '');
 
-  const result = await container().identity.login.execute({ email, password });
+  /*
+   * El `try` cubre la infraestructura, no la credencial.
+   *
+   * Si la base no responde —variable de entorno mal puesta en el despliegue,
+   * Neon dormida, red caída— aquí volaba una excepción sin atrapar. En
+   * producción Next se queda el mensaje para sí y el formulario no hace nada
+   * visible: se pulsa "Entrar" y no pasa absolutamente nada, que es la peor
+   * forma de fallar. Ahora sale un aviso en pantalla y el motivo real queda en
+   * los logs del servidor.
+   *
+   * `redirect()` va fuera a propósito: lanza para navegar, y atraparlo aquí
+   * dejaría al administrador en el login con la sesión ya iniciada.
+   */
+  let session: { sessionId: string; expiresAt: Date };
 
-  if (!result.ok) {
+  try {
+    const result = await container().identity.login.execute({ email, password });
+
+    if (!result.ok) {
+      return {
+        ok: false,
+        error: result.error.message,
+        code: result.error.code,
+        details: result.error.details,
+      };
+    }
+
+    session = result.value;
+  } catch (error) {
+    console.error('[login] no se pudo verificar la credencial:', error);
     return {
       ok: false,
-      error: result.error.message,
-      code: result.error.code,
-      details: result.error.details,
+      error: 'No pudimos conectar con la base de datos. Intenta de nuevo en un momento.',
+      code: 'UNEXPECTED',
+      details: {},
     };
   }
 
-  await setSessionCookie(result.value.sessionId, result.value.expiresAt);
+  await setSessionCookie(session.sessionId, session.expiresAt);
   redirect('/admin');
 }
 
@@ -125,6 +153,59 @@ export async function changeOrderStatus(
       revalidatePath(`/pedido/${result.value.code}`);
     }
 
+    return result;
+  });
+}
+
+// ── Fotos de producto ──────────────────────────────────────────────────
+
+/** Foto tal como viaja desde el navegador: base64, ya redimensionada allá. */
+export interface ProductImageUpload {
+  readonly base64: string;
+  readonly mimeType: string;
+  readonly alt: string;
+}
+
+export async function addProductImage(
+  productId: string,
+  upload: ProductImageUpload,
+): Promise<ActionResult<ProductImageDTO[]>> {
+  return guard(async () => {
+    await requireAdminForAction();
+
+    const result = await container().catalog.addImage.execute({
+      productId,
+      image: {
+        bytes: Uint8Array.from(Buffer.from(upload.base64, 'base64')),
+        mimeType: parseImageMimeType(upload.mimeType),
+        alt: upload.alt,
+      },
+    });
+
+    if (result.ok) revalidateCatalog();
+    return result;
+  });
+}
+
+export async function deleteProductImage(
+  imageId: string,
+): Promise<ActionResult<ProductImageDTO[]>> {
+  return guard(async () => {
+    await requireAdminForAction();
+    const result = await container().catalog.removeImage.execute(imageId);
+    if (result.ok) revalidateCatalog();
+    return result;
+  });
+}
+
+export async function reorderProductImages(
+  productId: string,
+  orderedIds: string[],
+): Promise<ActionResult<ProductImageDTO[]>> {
+  return guard(async () => {
+    await requireAdminForAction();
+    const result = await container().catalog.reorderImages.execute({ productId, orderedIds });
+    if (result.ok) revalidateCatalog();
     return result;
   });
 }

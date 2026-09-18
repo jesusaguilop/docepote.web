@@ -8,6 +8,7 @@
  */
 
 import type { Product } from '@core/domain/catalog/product';
+import type { ProductImage } from '@core/domain/catalog/product-image';
 import type { Flavor } from '@core/domain/catalog/flavor';
 import type { Category } from '@core/domain/catalog/category';
 import type { JarPattern } from '@core/domain/catalog/jar-art';
@@ -20,6 +21,12 @@ export interface FlavorDTO {
   readonly displayName: string;
   readonly summary: string;
   readonly composition: string | null;
+}
+
+export interface ProductImageDTO {
+  readonly id: string;
+  readonly url: string;
+  readonly alt: string;
 }
 
 export interface ProductDTO {
@@ -41,7 +48,13 @@ export interface ProductDTO {
   readonly flavor: FlavorDTO | null;
   readonly badge: string | null;
   readonly art: { readonly fillColor: string; readonly pattern: JarPattern };
+  /** Enlace a una foto externa; sobrevive de antes de que existiera `images`. */
   readonly imageUrl: string | null;
+  /**
+   * Fotos del producto, en orden de carrusel. Vacío = la ficha se dibuja con
+   * el potecito ilustrado, que es como nació la tienda.
+   */
+  readonly images: readonly ProductImageDTO[];
   readonly sizeOz: number | null;
   readonly units: number | null;
 
@@ -77,6 +90,7 @@ export function toProductDTO(
   product: Product,
   flavor: Flavor | null = null,
   locale = 'es',
+  images: readonly ProductImage[] = [],
 ): ProductDTO {
   const savings = product.savings;
   const perUnit = product.pricePerUnit;
@@ -100,6 +114,13 @@ export function toProductDTO(
     badge: product.badge,
     art: { fillColor: product.art.fillColor, pattern: product.art.pattern },
     imageUrl: product.imageUrl,
+    images: images.map((image) => ({
+      id: image.id,
+      url: image.url,
+      // Sin descripción propia se cae al nombre del producto: peor que una
+      // buena, mejor que un alt vacío.
+      alt: image.alt || text.name,
+    })),
     sizeOz: product.sizeOz,
     units: product.units,
 
@@ -121,12 +142,14 @@ export function toProductDTOs(
   products: readonly Product[],
   flavorsById: ReadonlyMap<string, Flavor> = new Map(),
   locale = 'es',
+  imagesByProduct: ReadonlyMap<string, ProductImage[]> = new Map(),
 ): ProductDTO[] {
   return products.map((product) =>
     toProductDTO(
       product,
-      product.flavorId ? flavorsById.get(product.flavorId) ?? null : null,
+      product.flavorId ? (flavorsById.get(product.flavorId) ?? null) : null,
       locale,
+      imagesByProduct.get(product.id) ?? [],
     ),
   );
 }

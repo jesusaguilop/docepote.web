@@ -33,13 +33,20 @@ export function CartDrawer() {
     let cancelled = false;
     startTransition(async () => {
       const result = await getCartSummary(items);
-      if (!cancelled && result.ok) setSummary(result.data);
+      if (cancelled || !result.ok) return;
+
+      setSummary(result.data);
+
+      // El aviso de abajo decía que los habíamos quitado, pero seguían en el
+      // carrito: volvían a aparecer en cada visita y bloqueaban el checkout
+      // para siempre. Ahora se quitan de verdad.
+      for (const productId of result.data.removedProductIds) remove(productId);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [items, isDrawerOpen, ready]);
+  }, [items, isDrawerOpen, ready, remove]);
 
   // Cerrar con Escape y bloquear el scroll del fondo mientras está abierto.
   useEffect(() => {

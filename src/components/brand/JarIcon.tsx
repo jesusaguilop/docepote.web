@@ -10,10 +10,13 @@ import { cn } from '@/lib/cn';
 
 export type JarPattern = 'wave' | 'dots' | 'drop';
 
-const INK = '#251a10';
-const LID = '#f2ecdd';
-const CAP = '#eae1cb';
-const HIGHLIGHT = '#f2ecdd';
+/* Del token y no del hexadecimal: así el potecito se viste con la temporada
+   que esté puesta en vez de quedarse con el kraft de fábrica. El color del
+   contenido sí llega por props — ese es del sabor, no de la campaña. */
+const INK = 'var(--color-ink)';
+const LID = 'var(--color-paper)';
+const CAP = 'var(--color-paper-2)';
+const HIGHLIGHT = 'var(--color-paper)';
 
 /** Cada patrón describe la textura del relleno: cremoso, granulado o líquido. */
 const PATTERNS: Record<JarPattern, React.ReactNode> = {

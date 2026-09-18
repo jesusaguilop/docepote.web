@@ -11,6 +11,7 @@ import {
   JarMenuIcon,
   LogoutIcon,
   OrdersIcon,
+  PaletteIcon,
   StoreIcon,
 } from './icons';
 
@@ -18,6 +19,7 @@ const NAV = [
   { href: '/admin', label: 'Resumen', Icon: DashboardIcon },
   { href: '/admin/pedidos', label: 'Pedidos', Icon: OrdersIcon },
   { href: '/admin/productos', label: 'Catálogo', Icon: JarMenuIcon },
+  { href: '/admin/apariencia', label: 'Apariencia', Icon: PaletteIcon },
 ];
 
 /**

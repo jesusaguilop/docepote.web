@@ -6,11 +6,22 @@ import { useRef } from 'react';
 import { ButtonLink } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/context';
 
-interface HeroProps {
-  whatsappNumber: string;
+/** Imagen de la mascota del hero: la de la temporada o la de siempre. */
+export interface HeroMascot {
+  readonly src: string;
+  readonly alt: string;
 }
 
-export function Hero({ whatsappNumber }: HeroProps) {
+/** La de siempre, la que vive en el repositorio. */
+const MASCOTA_POR_DEFECTO = '/brand/hero-mascot.jpg';
+
+interface HeroProps {
+  whatsappNumber: string;
+  /** `null` = no hay temporada con mascota propia. */
+  mascot?: HeroMascot | null;
+}
+
+export function Hero({ whatsappNumber, mascot = null }: HeroProps) {
   const { t } = useTranslation();
   const sectionRef = useRef<HTMLElement>(null);
   const reduceMotion = useReducedMotion();
@@ -26,9 +37,19 @@ export function Hero({ whatsappNumber }: HeroProps) {
 
   return (
     <section ref={sectionRef} className="texture-cats relative overflow-hidden">
-      {/* Velo verde: da contraste al texto sobre la textura de gatitos. */}
+      {/* Velo del color de la marca: da contraste al texto sobre la textura
+          de gatitos. Sale del token y no de un rgba escrito a mano para que
+          siga a la temporada que esté puesta — si no, una campaña rosada
+          dejaba este degradado verde y se veía roto. */}
       <div
-        className="absolute inset-0 bg-[linear-gradient(100deg,rgba(76,100,32,0.88)_0%,rgba(76,100,32,0.74)_55%,rgba(76,100,32,0.56)_100%)]"
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            'linear-gradient(100deg,' +
+            ' color-mix(in srgb, var(--color-green-deep) 88%, transparent) 0%,' +
+            ' color-mix(in srgb, var(--color-green-deep) 74%, transparent) 55%,' +
+            ' color-mix(in srgb, var(--color-green-deep) 56%, transparent) 100%)',
+        }}
         aria-hidden
       />
 
@@ -90,19 +111,23 @@ export function Hero({ whatsappNumber }: HeroProps) {
             initial={{ opacity: 0, scale: 0.9, rotate: -6 }}
             animate={{ opacity: 1, scale: 1, rotate: -2.5 }}
             transition={{ duration: 0.75, delay: 0.15, ease: [0.34, 1.56, 0.64, 1] }}
-            className="relative rounded-md bg-paper p-3 shadow-[0_18px_50px_rgba(20,28,8,0.35)]"
+            className="relative rounded-md bg-paper p-3 shadow-[0_18px_50px_rgba(20,10,12,0.35)]"
           >
             <span
               className="absolute -top-4 left-1/2 h-8 w-28 -translate-x-1/2 -rotate-2 bg-paper-2/85 shadow-sm"
               aria-hidden
             />
             <Image
-              src="/brand/hero-mascot.jpg"
-              alt={t.hero.mascotaAlt}
+              src={mascot?.src ?? MASCOTA_POR_DEFECTO}
+              alt={mascot?.alt ?? t.hero.mascotaAlt}
               width={615}
               height={824}
               priority
-              className="h-auto w-full rounded-sm"
+              /* `unoptimized` para la de temporada: la sirve /api/marca y ya
+                 viene del tamaño justo, así que pasarla por el optimizador de
+                 Next solo agrega un salto y una caché más que invalidar. */
+              unoptimized={Boolean(mascot)}
+              className="h-auto w-full rounded-sm object-contain"
               sizes="(max-width: 1024px) 90vw, 380px"
             />
             <p className="py-3 text-center font-script text-2xl text-ink-soft">

@@ -1,10 +1,12 @@
 import type { ProductReader, ProductQuery } from '@core/domain/catalog/product.repository';
 import type { FlavorReader } from '@core/domain/catalog/flavor.repository';
+import type { ProductImageReader } from '@core/domain/catalog/product-image.repository';
 import { toFlavorDTO, toProductDTOs, type ProductDTO } from '../dto/product.dto';
 import { Ok, type Result } from '@core/domain/shared/result';
 import type { DomainError } from '@core/domain/shared/errors';
 import { isCategory } from '@core/domain/catalog/category';
 import { loadFlavorIndex } from './flavor-index';
+import { loadImageIndex } from './image-index';
 
 export interface ListProductsInput {
   readonly category?: string;
@@ -24,6 +26,7 @@ export class ListProductsUseCase {
   constructor(
     private readonly products: ProductReader,
     private readonly flavors: FlavorReader,
+    private readonly images: ProductImageReader,
   ) {}
 
   async execute(input: ListProductsInput = {}): Promise<Result<ProductDTO[], DomainError>> {
@@ -34,9 +37,14 @@ export class ListProductsUseCase {
     };
 
     const found = await this.products.findAll(query);
-    const flavorsById = await loadFlavorIndex(this.flavors, found);
 
-    return Ok(toProductDTOs(found, flavorsById, input.locale));
+    // Sabores y fotos en una consulta cada uno, no una por producto.
+    const [flavorsById, imagesByProduct] = await Promise.all([
+      loadFlavorIndex(this.flavors, found),
+      loadImageIndex(this.images, found.map((product) => product.id)),
+    ]);
+
+    return Ok(toProductDTOs(found, flavorsById, input.locale, imagesByProduct));
   }
 }
 

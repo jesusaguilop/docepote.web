@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { fontVariables } from '@/lib/fonts';
 import { resolveSiteUrl } from '@/lib/site-url';
+import { activeSeason } from '@/lib/season';
+import { SeasonStyle } from '@/components/brand/SeasonStyle';
 import './globals.css';
 
 /**
@@ -54,16 +56,33 @@ export const metadata: Metadata = {
   },
 };
 
-export const viewport: Viewport = {
-  themeColor: '#7c9a34',
-  width: 'device-width',
-  initialScale: 1,
-};
+/** Color de fábrica de la barra del navegador, sin temporada puesta. */
+const THEME_COLOR_POR_DEFECTO = '#7c9a34';
+
+/**
+ * El color de la barra del navegador también sigue a la temporada: en el
+ * celular es un buen pedazo de pantalla, y dejarlo verde con la tienda en
+ * rosado se ve como un error.
+ */
+export async function generateViewport(): Promise<Viewport> {
+  const season = await activeSeason();
+
+  return {
+    themeColor: season?.colors.accentDeep ?? THEME_COLOR_POR_DEFECTO,
+    width: 'device-width',
+    initialScale: 1,
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es" className={fontVariables}>
-      <body>{children}</body>
+      <body>
+        {/* Antes que nada: redefine los colores de la marca si hay una
+            temporada puesta desde el panel. */}
+        <SeasonStyle />
+        {children}
+      </body>
     </html>
   );
 }

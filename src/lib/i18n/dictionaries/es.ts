@@ -82,6 +82,9 @@ export const es = {
     porEncargo: 'Se prepara por encargo — coordinamos la fecha contigo.',
     unidades: '{n} unidades',
     cadaUno: 'c/u',
+    ampliarFoto: 'Ver la foto más grande',
+    fotoAnterior: 'Foto anterior',
+    fotoSiguiente: 'Foto siguiente',
     sabor: 'Sabor',
     tamano: 'Tamaño',
     contiene: 'Contiene',
@@ -148,6 +151,8 @@ export const es = {
     errorNombre: 'Cuéntanos tu nombre.',
     errorCelular: 'Necesitamos un celular de 10 dígitos.',
     errorDireccion: 'Escribe la dirección completa, con barrio.',
+    errorResumen: 'No pudimos calcular tu pedido. Revisa tu conexión y vuelve a intentarlo.',
+    revisaCarrito: 'Hay algo en tu carrito que ya no podemos preparar. Ábrelo y ajusta las cantidades.',
   },
 
   pedido: {
@@ -165,6 +170,8 @@ export const es = {
     seguirComprando: 'Seguir comprando',
     escribirWhatsApp: 'Escribir por WhatsApp',
     consultaWhatsApp: 'Hola, pregunto por mi pedido {codigo}',
+    enviarWhatsApp: 'Enviar mi pedido por WhatsApp',
+    enviarWhatsAppLead: 'Tu navegador bloqueó la ventana de WhatsApp. Toca aquí para mandarnos el resumen y cerrar el pedido.',
     cancelado: 'Pedido cancelado',
     canceladoLead: 'Si crees que fue un error, escríbenos por WhatsApp y lo revisamos.',
     pasoDe: 'Estado actual del pedido: {estado}. Paso {actual} de {total}.',

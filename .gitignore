@@ -18,3 +18,7 @@ prisma/migrations/dev.db*
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Fotos originales de la sesión: pesan 8 MB y ya viven redimensionadas en
+# prisma/fotos, que es de donde las lee el seed.
+docepote-definitivo/

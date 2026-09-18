@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/cn';
 
 /**
@@ -47,6 +47,7 @@ interface LogoProps {
  */
 export function Logo({ className, tone = 'ink', size = 'md', href = '/' }: LogoProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const dimension = size === 'sm' ? 32 : 40;
 
   const handleTap = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -54,6 +55,13 @@ export function Logo({ className, tone = 'ink', size = 'md', href = '/' }: LogoP
 
     tapCount = now - lastTapAt > TAP_WINDOW_MS ? 1 : tapCount + 1;
     lastTapAt = now;
+
+    // Estando ya en el destino del enlace, el primer toque no tiene nada que
+    // hacer: navegar a la página en la que uno está no cambia nada, pero sí
+    // arranca una navegación que puede llegar tarde y pisar el salto al panel
+    // que dispara el segundo toque. Cortándola, el atajo es fiable justo donde
+    // más se usa — el logo de la portada.
+    if (pathname === href) event.preventDefault();
 
     if (tapCount < TAPS_REQUIRED) return;
 

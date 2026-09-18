@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'motion/react';
-import { JarIcon } from '@/components/brand/JarIcon';
+import { ProductGallery } from './ProductGallery';
 import { AddToCartButton } from './AddToCartButton';
 import { QuantityStepper } from './QuantityStepper';
 import { DiscountBadge, PriceTag } from './PriceTag';
@@ -33,22 +33,12 @@ export function ProductDetail({ product }: { product: ProductDTO }) {
         initial={{ opacity: 0, scale: 0.94 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="relative flex items-center justify-center rounded-md bg-paper-2/70 px-8 py-16 lg:sticky lg:top-28"
+        className="relative lg:sticky lg:top-28"
       >
-        <span className="absolute h-56 w-56 rounded-full bg-white/50 blur-3xl" aria-hidden />
-        <motion.div
-          className="relative h-64 w-64"
-          animate={{ y: [0, -12, 0], rotate: [-1.5, 1.5, -1.5] }}
-          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          <JarIcon
-            fillColor={product.art.fillColor}
-            pattern={product.art.pattern}
-            label={product.name}
-          />
-        </motion.div>
+        <ProductGallery product={product} />
 
-        <div className="absolute left-6 top-6 flex flex-wrap gap-2">
+        {/* Por encima de la galería, pero sin tapar las flechas del carrusel. */}
+        <div className="pointer-events-none absolute left-4 top-4 z-10 flex flex-wrap gap-2">
           {product.badge && (
             <span className="rounded-full bg-caramel px-3.5 py-1.5 font-display text-[0.74rem] font-bold uppercase tracking-wide text-white">
               {product.badge}

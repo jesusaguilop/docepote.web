@@ -22,6 +22,8 @@ import {
   PrismaAdminUserRepository,
   PrismaSessionRepository,
 } from './persistence/prisma/identity.repository';
+import { PrismaSeasonRepository } from './persistence/prisma/season.repository';
+import { PrismaProductImageRepository } from './persistence/prisma/product-image.repository';
 import { PrismaTransactionRunner } from './persistence/prisma/client';
 
 import { SystemClock } from './system/clock';
@@ -48,6 +50,12 @@ import {
   SetProductStockUseCase,
   ToggleProductAvailabilityUseCase,
 } from '@core/application/catalog/manage-product.use-case';
+import {
+  AddProductImageUseCase,
+  DeleteProductImageUseCase,
+  ListProductImagesUseCase,
+  ReorderProductImagesUseCase,
+} from '@core/application/catalog/product-images.use-cases';
 
 import { PlaceOrderUseCase } from '@core/application/ordering/place-order.use-case';
 import { GetCartSummaryUseCase } from '@core/application/ordering/get-cart-summary.use-case';
@@ -62,6 +70,14 @@ import {
   LoginUseCase,
   LogoutUseCase,
 } from '@core/application/identity/authenticate.use-case';
+import {
+  ActivateSeasonUseCase,
+  DeactivateSeasonsUseCase,
+  DeleteSeasonUseCase,
+  GetActiveSeasonUseCase,
+  ListSeasonsUseCase,
+  SaveSeasonUseCase,
+} from '@core/application/branding/season.use-cases';
 
 /** Elige la pasarela según la configuración (Open/Closed: agregar una más no toca este switch más que con un caso). */
 function createPaymentGateway(): PaymentGateway {
@@ -86,9 +102,11 @@ function build() {
   // ── Adaptadores ──────────────────────────────────────────────────────
   const products = new PrismaProductRepository();
   const flavors = new PrismaFlavorRepository();
+  const productImages = new PrismaProductImageRepository();
   const orders = new PrismaOrderRepository();
   const adminUsers = new PrismaAdminUserRepository();
   const sessions = new PrismaSessionRepository();
+  const seasons = new PrismaSeasonRepository();
   const transactions = new PrismaTransactionRunner();
 
   const clock = new SystemClock();
@@ -108,14 +126,22 @@ function build() {
     paymentMethod: payments.method,
 
     catalog: {
-      list: new ListProductsUseCase(products, flavors),
+      list: new ListProductsUseCase(products, flavors, productImages),
       listFlavors: new ListFlavorsUseCase(flavors),
-      getBySlug: new GetProductBySlugUseCase(products, flavors),
-      getRelated: new GetRelatedProductsUseCase(products, flavors),
+      getBySlug: new GetProductBySlugUseCase(products, flavors, productImages),
+      getRelated: new GetRelatedProductsUseCase(products, flavors, productImages),
       save: new SaveProductUseCase(products, flavors, ids),
       toggleAvailability: new ToggleProductAvailabilityUseCase(products, flavors),
       setStock: new SetProductStockUseCase(products, flavors),
       remove: new DeleteProductUseCase(products),
+
+      // El repositorio se expone igual que el de temporadas: la ruta que
+      // sirve la foto necesita los bytes, no un DTO.
+      images: productImages,
+      listImages: new ListProductImagesUseCase(productImages),
+      addImage: new AddProductImageUseCase(productImages, products, ids),
+      removeImage: new DeleteProductImageUseCase(productImages, transactions),
+      reorderImages: new ReorderProductImagesUseCase(productImages, transactions),
     },
 
     ordering: {
@@ -133,6 +159,19 @@ function build() {
       list: new ListOrdersUseCase(orders),
       changeStatus: new ChangeOrderStatusUseCase(orders, clock),
       salesSummary: new GetSalesSummaryUseCase(orders, clock),
+    },
+
+    branding: {
+      // El repositorio se expone además de los casos de uso: la ruta que
+      // sirve la imagen de la mascota necesita los bytes, y envolverlos en un
+      // DTO solo para desenvolverlos en el siguiente renglón no aporta nada.
+      seasons,
+      active: new GetActiveSeasonUseCase(seasons),
+      list: new ListSeasonsUseCase(seasons),
+      save: new SaveSeasonUseCase(seasons, ids),
+      activate: new ActivateSeasonUseCase(seasons, transactions),
+      deactivate: new DeactivateSeasonsUseCase(seasons),
+      remove: new DeleteSeasonUseCase(seasons),
     },
 
     identity: {

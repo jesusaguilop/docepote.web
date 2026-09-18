@@ -9,6 +9,7 @@ import { CATEGORIES, CATEGORY_LABELS } from '@core/domain/catalog/category';
 import { JAR_PATTERNS, type JarPattern } from '@core/domain/catalog/jar-art';
 import { cn } from '@/lib/cn';
 import type { FlavorDTO, ProductDTO } from '@core/application/dto/product.dto';
+import { ProductImageManager } from './ProductImageManager';
 
 const PATTERN_LABELS: Record<JarPattern, string> = {
   wave: 'Cremoso',
@@ -279,11 +280,26 @@ export function ProductForm({ product, flavors, onClose, onSaved }: ProductFormP
               id="p-badge"
               value={badge}
               onChange={(e) => setBadge(e.target.value)}
-              placeholder="Nuevo, Más pedido, Temporada..."
+              placeholder="Nuevo, Más pedido, Edición especial..."
               maxLength={24}
               className={inputClass}
             />
           </Field>
+
+          {/* Las fotos necesitan un producto al que pertenecer, y uno nuevo
+              todavía no existe en la base. Se guarda primero y se vuelve a
+              abrir para subirlas. */}
+          {product ? (
+            <ProductImageManager
+              productId={product.id}
+              productName={product.name}
+              images={product.images}
+            />
+          ) : (
+            <p className="rounded-md border border-dashed border-kraft-line px-4 py-3 text-[0.82rem] text-ink-soft">
+              Guarda el producto y vuelve a abrirlo para subirle fotos.
+            </p>
+          )}
 
           <div>
             <p className="mb-2 font-display text-[0.86rem] font-semibold">Color del pote</p>

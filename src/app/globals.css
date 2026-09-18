@@ -3,10 +3,15 @@
 /* ═══════════════════════════════════════════════════════════════════════
    Doce pote — sistema de diseño
 
-   Los tokens salen tal cual del prototipo original de la marca: papel kraft,
-   verde oliva, tinta café. Se declaran una sola vez aquí y Tailwind genera
-   las utilidades (bg-paper, text-ink, border-kraft-line…). Ningún componente
-   debería escribir un hexadecimal suelto.
+   Los tokens se declaran una sola vez aquí y Tailwind genera las utilidades
+   (bg-paper, text-ink, border-kraft-line…). Ningún componente debería
+   escribir un hexadecimal suelto: por eso vestir la tienda entera de otro
+   color es cambiar esta lista y nada más.
+
+   Estos son los valores de fábrica — el kraft de siempre. La temporada
+   activa los pisa desde la base de datos: el layout inyecta un :root con
+   los colores que se hayan guardado en el panel (Panel → Apariencia). Si no
+   hay ninguna temporada activa, manda esta lista.
    ═══════════════════════════════════════════════════════════════════════ */
 
 @theme {

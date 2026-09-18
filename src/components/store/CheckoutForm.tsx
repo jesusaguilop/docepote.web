@@ -17,6 +17,7 @@ import { useCart } from './cart-context';
 import { useToast } from '@/components/ui/Toast';
 import { getCartSummary } from '@/app/actions/cart';
 import { placeOrder } from '@/app/actions/orders';
+import { rememberPaymentHandoff } from './PaymentHandoff';
 import { JarIcon } from '@/components/brand/JarIcon';
 import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/context';
@@ -35,7 +36,7 @@ const EMPTY_FORM: FormState = { name: '', phone: '', address: '', notes: '' };
 
 export function CheckoutForm() {
   const router = useRouter();
-  const { items, totalItems, clear, ready } = useCart();
+  const { items, totalItems, clear, remove, ready } = useCart();
   const { notify } = useToast();
   const { t, fill } = useTranslation();
 
@@ -49,6 +50,9 @@ export function CheckoutForm() {
   const [summary, setSummary] = useState<CartSummaryDTO | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
+  /** Cambia para forzar otro intento cuando el resumen falla. */
+  const [attempt, setAttempt] = useState(0);
   const [isSubmitting, startSubmit] = useTransition();
 
   // Recalcula el resumen ante cualquier cambio que afecte el total.
@@ -56,14 +60,42 @@ export function CheckoutForm() {
     if (!ready || items.length === 0) return;
 
     let cancelled = false;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+
     void getCartSummary(items, method).then((result) => {
-      if (!cancelled && result.ok) setSummary(result.data);
+      if (cancelled) return;
+
+      // Antes un fallo aquí se tragaba en silencio: el resumen se quedaba en
+      // `null`, el botón de confirmar deshabilitado para siempre y el cliente
+      // sin una sola pista de por qué no podía pedir.
+      if (!result.ok) {
+        setSummaryError(result.error);
+
+        // La base de Neon se duerme sola: la primera consulta tras un rato
+        // quieta puede tardar de más y fallar. Un tropiezo así no debería
+        // dejar el pedido bloqueado hasta que al cliente se le ocurra
+        // recargar, así que se reintenta un par de veces.
+        if (attempt < 2) retry = setTimeout(() => setAttempt((n) => n + 1), 1500);
+        return;
+      }
+
+      setSummaryError(null);
+      setAttempt(0);
+      setSummary(result.data);
+
+      // Un producto que ya no existe en el catálogo (borrado desde el panel,
+      // o una base sembrada de nuevo con otros ids) dejaba el carrito
+      // guardado en el navegador trabado para siempre: el resumen lo marcaba
+      // como problema y nada en pantalla lo decía. Se saca solo y el carrito
+      // vuelve a un estado con el que sí se puede pedir.
+      for (const productId of result.data.removedProductIds) remove(productId);
     });
 
     return () => {
       cancelled = true;
+      clearTimeout(retry);
     };
-  }, [items, method, ready]);
+  }, [items, method, ready, remove, attempt]);
 
   const update = (field: keyof FormState) => (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -125,7 +157,13 @@ export function CheckoutForm() {
       // La pasarela decide a dónde va el cliente: hoy WhatsApp, mañana Wompi.
       // Esta pantalla solo obedece la instrucción.
       if (payment.kind === 'redirect') {
-        window.open(payment.url, '_blank', 'noopener,noreferrer');
+        const opened = window.open(payment.url, '_blank', 'noopener,noreferrer');
+
+        // Para cuando llega esta línea ya hubo un `await`, así que el
+        // navegador no la cuenta como respuesta a un clic y bloquea la
+        // ventana. El pedido quedaba creado y el mensaje nunca salía. Si pasa,
+        // el enlace se guarda y la página del pedido lo ofrece como botón.
+        if (!opened) rememberPaymentHandoff(order.code, payment.url);
       }
 
       router.push(`/pedido/${order.code}`);
@@ -137,6 +175,16 @@ export function CheckoutForm() {
   }
 
   const submitDisabled = isSubmitting || !summary || summary.hasBlockingIssues;
+
+  /* Un botón apagado sin explicación es un callejón sin salida. Si no se puede
+     confirmar, en el mismo sitio donde aparecen los errores del formulario se
+     dice por qué. */
+  const blockedReason = summaryError
+    ? t.checkout.errorResumen
+    : summary?.hasBlockingIssues
+      ? t.checkout.revisaCarrito
+      : null;
+  const alert = formError ?? blockedReason;
 
   return (
     <form
@@ -333,14 +381,14 @@ export function CheckoutForm() {
           )}
 
           <div className="hidden border-t border-kraft-line/60 px-6 py-5 lg:block">
-            {formError && (
+            {alert && (
               <motion.p
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="mb-4 rounded bg-berry/10 px-3 py-2.5 text-[0.85rem] text-berry"
                 role="alert"
               >
-                {formError}
+                {alert}
               </motion.p>
             )}
 
@@ -363,14 +411,14 @@ export function CheckoutForm() {
         los tiene siempre a la vista, con el área segura del iPhone respetada.
       */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-kraft-line bg-paper/95 px-5 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md lg:hidden">
-        {formError && (
+        {alert && (
           <motion.p
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-2.5 rounded bg-berry/10 px-3 py-2 text-[0.82rem] text-berry"
             role="alert"
           >
-            {formError}
+            {alert}
           </motion.p>
         )}
 

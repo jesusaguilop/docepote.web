@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { JarIcon } from '@/components/brand/JarIcon';
@@ -18,6 +19,9 @@ import type { ProductDTO } from '@core/application/dto/product.dto';
  */
 export function ProductCard({ product }: { product: ProductDTO }) {
   const { t, fill } = useTranslation();
+
+  /* La primera foto es la portada; el orden lo decide el panel. */
+  const portada = product.images[0] ?? null;
 
   return (
     <motion.article
@@ -51,30 +55,52 @@ export function ProductCard({ product }: { product: ProductDTO }) {
         href={`/producto/${product.slug}`}
         className="flex flex-1 flex-col focus-visible:outline-offset-[-4px]"
       >
-        <div className="relative flex items-center justify-center bg-paper-2/70 px-6 py-9">
-          {/* Halo suave que crece al pasar el cursor. */}
-          <span
-            className="absolute h-32 w-32 rounded-full bg-white/60 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
-            aria-hidden
-          />
-          <motion.div
-            className="relative h-32 w-32"
-            whileHover={{ rotate: [0, -6, 6, -3, 0], scale: 1.06 }}
-            transition={{ duration: 0.6 }}
-          >
-            <JarIcon
-              fillColor={product.art.fillColor}
-              pattern={product.art.pattern}
-              label={product.name}
+        {/* Con foto se muestra la foto; sin ella, el potecito ilustrado de
+            siempre. Los dos ocupan exactamente el mismo alto para que las
+            tarjetas de una fila no queden desparejas mientras se van subiendo
+            las fotos producto por producto. */}
+        {portada ? (
+          <div className="relative aspect-4/3 overflow-hidden bg-paper-2/70">
+            <Image
+              src={portada.url}
+              alt={portada.alt}
+              fill
+              sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 300px"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
-          </motion.div>
 
-          {product.soldOut && (
-            <span className="absolute inset-x-0 bottom-3 text-center font-script text-2xl text-ink-soft">
-              {t.producto.seAcabo}
-            </span>
-          )}
-        </div>
+            {product.soldOut && (
+              <span className="absolute inset-0 flex items-end justify-center bg-white/55 pb-3 font-script text-2xl text-ink-soft">
+                {t.producto.seAcabo}
+              </span>
+            )}
+          </div>
+        ) : (
+          <div className="relative flex aspect-4/3 items-center justify-center bg-paper-2/70 px-6">
+            {/* Halo suave que crece al pasar el cursor. */}
+            <span
+              className="absolute h-32 w-32 rounded-full bg-white/60 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100"
+              aria-hidden
+            />
+            <motion.div
+              className="relative h-32 w-32"
+              whileHover={{ rotate: [0, -6, 6, -3, 0], scale: 1.06 }}
+              transition={{ duration: 0.6 }}
+            >
+              <JarIcon
+                fillColor={product.art.fillColor}
+                pattern={product.art.pattern}
+                label={product.name}
+              />
+            </motion.div>
+
+            {product.soldOut && (
+              <span className="absolute inset-x-0 bottom-3 text-center font-script text-2xl text-ink-soft">
+                {t.producto.seAcabo}
+              </span>
+            )}
+          </div>
+        )}
 
         <div className="flex flex-1 flex-col px-6 pb-5 pt-5">
           {/* Metadatos del formato: onzas para individuales, unidades para combos. */}

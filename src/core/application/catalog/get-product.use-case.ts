@@ -1,16 +1,19 @@
 import type { ProductReader } from '@core/domain/catalog/product.repository';
 import type { FlavorReader } from '@core/domain/catalog/flavor.repository';
+import type { ProductImageReader } from '@core/domain/catalog/product-image.repository';
 import { Slug } from '@core/domain/shared/slug';
 import { NotFoundError, type DomainError } from '@core/domain/shared/errors';
 import { Err, Ok, type Result } from '@core/domain/shared/result';
 import { toProductDTO, toProductDTOs, type ProductDTO } from '../dto/product.dto';
 import { loadFlavorIndex } from './flavor-index';
+import { loadImageIndex, loadImagesFor } from './image-index';
 
 /** Trae un producto por su slug para la página de detalle. */
 export class GetProductBySlugUseCase {
   constructor(
     private readonly products: ProductReader,
     private readonly flavors: FlavorReader,
+    private readonly images: ProductImageReader,
   ) {}
 
   async execute(rawSlug: string, locale = 'es'): Promise<Result<ProductDTO, DomainError>> {
@@ -24,8 +27,12 @@ export class GetProductBySlugUseCase {
     const product = await this.products.findBySlug(slug);
     if (!product) return Err(new NotFoundError('el producto', rawSlug));
 
-    const flavor = product.flavorId ? await this.flavors.findById(product.flavorId) : null;
-    return Ok(toProductDTO(product, flavor, locale));
+    const [flavor, images] = await Promise.all([
+      product.flavorId ? this.flavors.findById(product.flavorId) : null,
+      loadImagesFor(this.images, product.id),
+    ]);
+
+    return Ok(toProductDTO(product, flavor, locale, images));
   }
 }
 
@@ -40,6 +47,7 @@ export class GetRelatedProductsUseCase {
   constructor(
     private readonly products: ProductReader,
     private readonly flavors: FlavorReader,
+    private readonly images: ProductImageReader,
   ) {}
 
   async execute(slug: string, limit = 3, locale = 'es'): Promise<Result<ProductDTO[], DomainError>> {
@@ -68,7 +76,11 @@ export class GetRelatedProductsUseCase {
       picks = [...picks, ...rest.slice(0, limit - picks.length)];
     }
 
-    const flavorsById = await loadFlavorIndex(this.flavors, picks);
-    return Ok(toProductDTOs(picks, flavorsById, locale));
+    const [flavorsById, imagesByProduct] = await Promise.all([
+      loadFlavorIndex(this.flavors, picks),
+      loadImageIndex(this.images, picks.map((product) => product.id)),
+    ]);
+
+    return Ok(toProductDTOs(picks, flavorsById, locale, imagesByProduct));
   }
 }

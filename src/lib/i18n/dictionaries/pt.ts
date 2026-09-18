@@ -85,6 +85,9 @@ export const pt: Dictionary = {
     porEncargo: 'Feito sob encomenda — combinamos a data com você.',
     unidades: '{n} unidades',
     cadaUno: 'cada',
+    ampliarFoto: 'Ver a foto maior',
+    fotoAnterior: 'Foto anterior',
+    fotoSiguiente: 'Próxima foto',
     sabor: 'Sabor',
     tamano: 'Tamanho',
     contiene: 'Contém',
@@ -151,6 +154,8 @@ export const pt: Dictionary = {
     errorNombre: 'Conte para nós o seu nome.',
     errorCelular: 'Precisamos de um celular com 10 dígitos.',
     errorDireccion: 'Escreva o endereço completo, com o bairro.',
+    errorResumen: 'Não conseguimos calcular seu pedido. Verifique sua conexão e tente de novo.',
+    revisaCarrito: 'Tem algo no seu carrinho que não conseguimos mais preparar. Abra o carrinho e ajuste as quantidades.',
   },
 
   pedido: {
@@ -168,6 +173,8 @@ export const pt: Dictionary = {
     seguirComprando: 'Continuar comprando',
     escribirWhatsApp: 'Falar pelo WhatsApp',
     consultaWhatsApp: 'Olá, queria saber do meu pedido {codigo}',
+    enviarWhatsApp: 'Enviar meu pedido pelo WhatsApp',
+    enviarWhatsAppLead: 'Seu navegador bloqueou a janela do WhatsApp. Toque aqui para nos mandar o resumo e fechar o pedido.',
     cancelado: 'Pedido cancelado',
     canceladoLead: 'Se achar que foi um engano, fale com a gente pelo WhatsApp que verificamos.',
     pasoDe: 'Situação atual do pedido: {estado}. Passo {actual} de {total}.',

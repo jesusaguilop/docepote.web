@@ -8,6 +8,7 @@ import { FlavorsSection } from '@/components/store/FlavorsSection';
 import { Reveal } from '@/components/ui/Reveal';
 import { ButtonLink } from '@/components/ui/Button';
 import { getTranslations } from '@/lib/i18n/server';
+import { activeSeason } from '@/lib/season';
 
 /**
  * Portada.
@@ -30,10 +31,18 @@ export default async function HomePage() {
   const { catalog, config } = container();
   const { locale, t } = await getTranslations();
 
-  const [productsResult, flavorsResult] = await Promise.all([
+  const [productsResult, flavorsResult, season] = await Promise.all([
     catalog.list.execute({ onlyActive: true, locale }),
     catalog.listFlavors.execute(locale),
+    activeSeason(),
   ]);
+
+  // La mascota de la temporada manda sobre la de siempre, pero solo si la
+  // campaña trae una: cambiar los colores sin subir imagen es válido.
+  const mascot =
+    season?.mascotUrl && season.mascotAlt
+      ? { src: season.mascotUrl, alt: season.mascotAlt }
+      : null;
 
   const schedule = [
     { day: t.horario.lunesViernes, hours: SCHEDULE_HOURS[0] },
@@ -46,7 +55,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero whatsappNumber={config.WHATSAPP_NUMBER} />
+      <Hero whatsappNumber={config.WHATSAPP_NUMBER} mascot={mascot} />
       <FactsStrip />
 
       {/* ── Historia y empaque ─────────────────────────────────────────── */}

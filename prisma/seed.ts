@@ -14,6 +14,8 @@
 
 import { PrismaClient } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
+import { readFile, readdir } from 'node:fs/promises';
+import path from 'node:path';
 import { ScryptPasswordHasher } from '../src/infrastructure/auth/scrypt-password-hasher';
 import { Slug } from '../src/core/domain/shared/slug';
 
@@ -387,11 +389,300 @@ async function seedAdmin(): Promise<void> {
   console.log(`    Contraseña: ${password}  ← cámbiala en producción`);
 }
 
+// ─────────────────────────────────────────────────────────────────────────
+//  Temporadas
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Las dos temporadas de arranque.
+ *
+ * "Como siempre" existe aunque sea idéntica a la paleta de fábrica: sin ella,
+ * volver del rosado al kraft obligaría a saberse los doce hexadecimales. Con
+ * ella es un clic.
+ *
+ * Los colores de Amor y Amistad están muestreados de la pieza de la campaña
+ * ("Edición especial · Brownies artesanales"), no inventados a ojo: el rosa
+ * del fondo (#f28db0), la crema de los títulos (#fddeb5), el vino del
+ * lettering (#52010d) y la frambuesa de los corazones del sticker (#bc0045).
+ *
+ * El papel es una versión lavada de ese rosa y no el rosa a secas: el fondo
+ * de la pieza carga cuatro palabras, el de la tienda carga párrafos, fichas
+ * de producto y un formulario de pedido.
+ */
+const SEASONS = [
+  {
+    id: 'temporada-kraft',
+    name: 'Como siempre',
+    active: false,
+    colors: {
+      ink: '#251a10',
+      inkSoft: '#5b4a38',
+      accent: '#7c9a34',
+      accentDeep: '#4c6420',
+      accentDark: '#38480f',
+      kraft: '#c7ae85',
+      kraftDark: '#8c6f45',
+      kraftLine: '#a98c5e',
+      caramel: '#9c6405',
+      paper: '#f2ecdd',
+      paper2: '#eae1cb',
+      berry: '#8c2e2e',
+    },
+    mascot: null,
+  },
+  {
+    id: 'temporada-amor-y-amistad',
+    name: 'Amor y Amistad',
+    active: true,
+    colors: {
+      ink: '#52010d',
+      inkSoft: '#7d3a48',
+      accent: '#f28db0',
+      accentDeep: '#bc0045',
+      accentDark: '#8f0034',
+      kraft: '#fddeb5',
+      kraftDark: '#c98fa4',
+      kraftLine: '#eab4c7',
+      caramel: '#c35a3a',
+      paper: '#fdeef3',
+      paper2: '#fbdfe9',
+      berry: '#8c2e2e',
+    },
+    mascot: {
+      file: 'public/brand/amor-mascot.png',
+      mimeType: 'image/png',
+      alt: 'El gato de Doce pote abrazando un brownie lleno de corazones',
+    },
+  },
+] as const;
+
+async function seedSeasons(): Promise<void> {
+  for (const season of SEASONS) {
+    // Si ya existe se respeta tal cual: puede que el negocio le haya movido
+    // los colores desde el panel, y el seed no está para deshacer eso.
+    const existing = await prisma.season.findUnique({ where: { id: season.id } });
+    if (existing) {
+      console.log(`  · La temporada "${season.name}" ya existía, no se toca`);
+      continue;
+    }
+
+    // Prisma tipa las columnas de bytes como `Uint8Array<ArrayBuffer>`, y
+    // tanto el `Buffer` de Node como `Uint8Array.from` prometen menos que
+    // eso (`ArrayBufferLike`, que incluye memoria compartida). Copiar los
+    // bytes a un array nuevo da exactamente el tipo que la columna pide.
+    let mascotImage: Uint8Array<ArrayBuffer> | null = null;
+    if (season.mascot) {
+      try {
+        const bytes = await readFile(path.join(process.cwd(), season.mascot.file));
+        mascotImage = new Uint8Array(bytes.byteLength);
+        mascotImage.set(bytes);
+      } catch {
+        // Sin la imagen la temporada sigue siendo válida: se queda con los
+        // colores y el hero usa el gato de siempre.
+        console.log(`  ! No se encontró ${season.mascot.file}; la temporada va sin mascota`);
+      }
+    }
+
+    await prisma.season.create({
+      data: {
+        id: season.id,
+        name: season.name,
+        active: season.active,
+        ...season.colors,
+        mascotImage,
+        mascotMimeType: mascotImage ? (season.mascot?.mimeType ?? null) : null,
+        mascotAlt: mascotImage ? (season.mascot?.alt ?? null) : null,
+      },
+    });
+
+    console.log(`  ✓ Temporada "${season.name}"${season.active ? ' (puesta)' : ''}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Especiales de Amor y Amistad
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Los tres productos de la campaña de brownies.
+ *
+ * Precios, nombres y descripciones son los que pasó el negocio, no
+ * invenciones de este archivo. Salen publicados.
+ *
+ * Llevan el chocolate del brownie como color de pote —no son potes, y con el
+ * color de un sabor de la casa se confundirían— y su propia etiqueta.
+ */
+const CHOCOLATE_BROWNIE = '#5d160f';
+
+const SPECIALS = [
+  {
+    slug: 'brigabrownie',
+    name: 'Brigabrownie',
+    description:
+      'Delicioso brownie de chocolate de capa doble, con brigadeiro de chocolate semiamargo en la mitad y trocitos de galleta Oreo. 🤤',
+    descriptionPt:
+      'Delicioso brownie de chocolate de camada dupla, com brigadeiro de chocolate meio amargo no meio e pedacinhos de biscoito Oreo. 🤤',
+    price: 10000,
+    /** Estaba en 12.000: la tienda lo pinta tachado y calcula el descuento. */
+    previousPrice: 12000,
+    category: 'individual',
+    badge: 'Edición especial',
+    units: null,
+    position: 90,
+  },
+  {
+    slug: 'minibrownies-personalizados',
+    name: 'Minibrownies personalizados',
+    description:
+      '12 minibrownies de tu preferencia, con los sabores favoritos disponibles en DOCEPOTE. 💚 Cuéntanos tu idea y sorprende en esas fechas especiales. 🤎',
+    descriptionPt:
+      '12 minibrownies do seu jeito, com os sabores favoritos disponíveis na DOCEPOTE. 💚 Conte sua ideia e surpreenda nessas datas especiais. 🤎',
+    price: 25000,
+    previousPrice: null,
+    category: 'combo',
+    badge: '2 X 18.000',
+    units: 12,
+    position: 91,
+  },
+  {
+    slug: 'degustacion-shots',
+    name: 'Degustación shots',
+    description:
+      'Degusta nuestros sabores de minishots de bolo no pote. 💚 Fórmula secreta con el toque perfecto de cariño y dedicación, inspirada en los postres brasileños. 100% artesanal, hecho con amor.',
+    descriptionPt:
+      'Prove nossos sabores de minishots de bolo no pote. 💚 Fórmula secreta com o toque perfeito de carinho e dedicação, inspirada nos doces brasileiros. 100% artesanal, feito com amor.',
+    price: 15000,
+    previousPrice: null,
+    category: 'combo',
+    badge: 'Edición especial',
+    units: null,
+    position: 92,
+  },
+] as const;
+
+async function seedSpecials(): Promise<void> {
+  for (const special of SPECIALS) {
+    const existing = await prisma.product.findUnique({ where: { slug: special.slug } });
+    if (existing) {
+      console.log(`  · "${special.name}" ya existía, no se toca`);
+      continue;
+    }
+
+    await prisma.product.create({
+      data: {
+        id: randomUUID(),
+        slug: Slug.of(special.slug).value,
+        name: special.name,
+        description: special.description,
+        descriptionPt: special.descriptionPt,
+        price: special.price,
+        previousPrice: special.previousPrice,
+        category: special.category,
+        flavorId: null,
+        badge: special.badge,
+        fillColor: CHOCOLATE_BROWNIE,
+        pattern: 'drop',
+        units: special.units,
+        sizeOz: null,
+        active: true,
+        stock: null,
+        position: special.position,
+      },
+    });
+
+    console.log(`  ✓ "${special.name}" · $${special.price.toLocaleString('es-CO')}`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+//  Fotos de producto
+// ─────────────────────────────────────────────────────────────────────────
+
+/**
+ * Sube las fotos de `prisma/fotos` a la base.
+ *
+ * El nombre del archivo es el contrato: `<slug>-<orden>.jpg`. El orden
+ * importa porque la 1 es la que sale en la tarjeta del catálogo.
+ *
+ * Solo toca productos que no tengan ninguna foto todavía. Así re-sembrar no
+ * pisa lo que el negocio haya subido o reordenado desde el panel, que es
+ * exactamente el tipo de trabajo que duele perder.
+ */
+const CARPETA_FOTOS = 'prisma/fotos';
+
+async function seedProductImages(): Promise<void> {
+  let carpeta: string[];
+
+  try {
+    carpeta = await readdir(path.join(process.cwd(), CARPETA_FOTOS));
+  } catch {
+    console.log(`  · No hay carpeta ${CARPETA_FOTOS}; me salto las fotos`);
+    return;
+  }
+
+  // Agrupadas por slug y ordenadas por el número del nombre.
+  const porSlug = new Map<string, { archivo: string; orden: number }[]>();
+
+  for (const archivo of carpeta) {
+    const match = /^(.+)-(\d+)\.jpe?g$/i.exec(archivo);
+    if (!match?.[1] || !match[2]) continue;
+
+    const slug = match[1];
+    const lista = porSlug.get(slug) ?? [];
+    lista.push({ archivo, orden: Number(match[2]) });
+    porSlug.set(slug, lista);
+  }
+
+  let subidas = 0;
+
+  for (const [slug, archivos] of porSlug) {
+    const product = await prisma.product.findUnique({ where: { slug } });
+    if (!product) {
+      console.log(`  ! No hay producto con slug "${slug}"; sus fotos se quedan sin subir`);
+      continue;
+    }
+
+    const yaTiene = await prisma.productImage.count({ where: { productId: product.id } });
+    if (yaTiene > 0) {
+      console.log(`  · "${product.name}" ya tiene ${yaTiene} foto(s), no se toca`);
+      continue;
+    }
+
+    archivos.sort((a, b) => a.orden - b.orden);
+
+    for (const [index, { archivo }] of archivos.entries()) {
+      const bytes = await readFile(path.join(process.cwd(), CARPETA_FOTOS, archivo));
+      const image = new Uint8Array(bytes.byteLength);
+      image.set(bytes);
+
+      await prisma.productImage.create({
+        data: {
+          id: randomUUID(),
+          productId: product.id,
+          position: index,
+          image,
+          mimeType: 'image/jpeg',
+          alt: `${product.name} de Doce pote`,
+        },
+      });
+
+      subidas += 1;
+    }
+
+    console.log(`  ✓ "${product.name}": ${archivos.length} foto(s)`);
+  }
+
+  console.log(`  ✓ ${subidas} fotos en total`);
+}
+
 async function main(): Promise<void> {
   console.log('\n🐱 Sembrando la base de datos de DOCEPOTE...\n');
   await seedFlavors();
   await seedProducts();
+  await seedSpecials();
   await seedAdmin();
+  await seedSeasons();
+  await seedProductImages();
   console.log('\n✨ Listo.\n');
 }
 
