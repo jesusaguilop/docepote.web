@@ -371,7 +371,7 @@ function EditorDeTemporada({
                     value={draft.colors[key]}
                     onChange={(event) => setColor(key, event.target.value)}
                     spellCheck={false}
-                    className="w-[5.5rem] shrink-0 rounded border border-kraft-line px-2 py-1 font-mono text-[0.76rem] outline-none focus:border-green-deep"
+                    className="w-[5.5rem] shrink-0 rounded border border-kraft-line px-2 py-1 text-[0.76rem] outline-none focus:border-green-deep"
                     aria-label={`${ETIQUETAS[key].label} en hexadecimal`}
                   />
                 </label>

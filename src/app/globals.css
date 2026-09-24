@@ -30,9 +30,9 @@
   --color-berry: #8c2e2e;
 
   /* ── Tipografía ────────────────────────────────────────────────────── */
-  --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-script: var(--font-caveat), ui-serif, cursive;
+  --font-display: var(--font-dynapuff), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-dynapuff), ui-sans-serif, system-ui, sans-serif;
+  --font-script: var(--font-dynapuff), ui-sans-serif, system-ui, sans-serif;
 
   /* ── Radios: la marca es de esquinas casi rectas, tipo papel ───────── */
   --radius-sm: 3px;
@@ -119,7 +119,7 @@
 
   h1, h2, h3, h4 {
     font-family: var(--font-display);
-    letter-spacing: -0.015em;
+    letter-spacing: 0;
     text-wrap: balance;
   }
 
