@@ -3,7 +3,7 @@
  *
  * `DeliveryPolicy` es un objeto de valor configurable: la tarifa y el umbral
  * de envío gratis llegan desde configuración, no están quemados en el código.
- * Si mañana hay domicilio gratis por encima de otro monto, cambia el .env.
+ * Se cambian desde el panel (Ajustes); el .env solo trae los de fábrica.
  */
 
 import { Money, COP } from '../shared/money';

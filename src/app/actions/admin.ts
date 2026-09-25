@@ -24,6 +24,10 @@ import type { ProductDTO, ProductImageDTO } from '@core/application/dto/product.
 import { parseImageMimeType } from '@core/domain/catalog/product-image';
 import type { OrderDTO } from '@core/application/dto/order.dto';
 import type { SaveProductInput } from '@core/application/catalog/save-product.use-case';
+import type {
+  DeliverySettingsDTO,
+  SaveDeliverySettingsInput,
+} from '@core/application/ordering/delivery-settings.use-cases';
 
 /** Rutas públicas que dependen del catálogo y hay que refrescar tras un cambio. */
 const PUBLIC_CATALOG_PATHS = ['/', '/catalogo'];
@@ -206,6 +210,22 @@ export async function reorderProductImages(
     await requireAdminForAction();
     const result = await container().catalog.reorderImages.execute({ productId, orderedIds });
     if (result.ok) revalidateCatalog();
+    return result;
+  });
+}
+
+// ── Domicilio ──────────────────────────────────────────────────────────
+
+export async function saveDeliverySettings(
+  input: SaveDeliverySettingsInput,
+): Promise<ActionResult<DeliverySettingsDTO>> {
+  return guard(async () => {
+    await requireAdminForAction();
+    const result = await container().ordering.saveDeliverySettings.execute({
+      fee: Number(input.fee),
+      freeThreshold: Number(input.freeThreshold),
+    });
+    if (result.ok) revalidatePath('/admin/domicilio');
     return result;
   });
 }

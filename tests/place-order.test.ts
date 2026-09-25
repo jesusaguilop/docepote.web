@@ -10,6 +10,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { PlaceOrderUseCase } from '@core/application/ordering/place-order.use-case';
+import { fixedDeliveryPolicy } from '@core/application/ordering/delivery-settings.use-cases';
 import { Product } from '@core/domain/catalog/product';
 import { JarArt } from '@core/domain/catalog/jar-art';
 import { Money } from '@core/domain/shared/money';
@@ -87,7 +88,7 @@ describe('PlaceOrderUseCase', () => {
     useCase = new PlaceOrderUseCase(
       orders,
       products,
-      DeliveryPolicy.of(5000, 60000),
+      fixedDeliveryPolicy(DeliveryPolicy.of(5000, 60000)),
       gateway,
       new ImmediateTransactionRunner(),
       new FixedClock(new Date('2026-09-04T15:00:00Z')),

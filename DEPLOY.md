@@ -97,8 +97,8 @@ Verifica en Neon → **Tables** que aparezcan `Product`, `Flavor`, `Order`,
    | `SITE_URL`                    | dominio de Vercel | Fíjala con dominio propio   |
    | `WHATSAPP_NUMBER`             | `573180173770`   | Quién recibe los pedidos    |
    | `INSTAGRAM`                   | `docepotevup`    | Enlace del pie              |
-   | `DELIVERY_FEE_COP`            | `5000`           | Costo del domicilio         |
-   | `FREE_DELIVERY_THRESHOLD_COP` | `60000`          | Desde cuánto va gratis      |
+   | `DELIVERY_FEE_COP`            | `5000`           | Costo del domicilio de fábrica; luego se cambia en el panel, en Domicilio |
+   | `FREE_DELIVERY_THRESHOLD_COP` | `60000`          | Desde cuánto va gratis, de fábrica |
    | `PAYMENT_GATEWAY`             | `whatsapp`       | Ver la sección de Wompi     |
 
    Si dejas alguna vacía o mal escrita, la tienda **no se cae**: usa el valor

@@ -3,7 +3,7 @@
  *
  * El navegador solo guarda ids y cantidades; esta consulta les pone precio,
  * detecta lo que se agotó mientras el cliente decidía y calcula el domicilio
- * con la misma `DeliveryPolicy` que usará el pedido final. Así lo que se ve
+ * con la misma tarifa vigente que usará el pedido final. Así lo que se ve
  * en el resumen es exactamente lo que se va a cobrar.
  */
 
@@ -11,7 +11,8 @@ import { Cart, type CartItem } from '@core/domain/ordering/cart';
 import type { ProductReader } from '@core/domain/catalog/product.repository';
 import type { FlavorReader } from '@core/domain/catalog/flavor.repository';
 import { loadFlavorIndex } from '../catalog/flavor-index';
-import type { DeliveryPolicy, FulfillmentMethod } from '@core/domain/ordering/fulfillment';
+import type { FulfillmentMethod } from '@core/domain/ordering/fulfillment';
+import type { DeliveryPolicySource } from './delivery-settings.use-cases';
 import { parseFulfillmentMethod } from '@core/domain/ordering/fulfillment';
 import { Money } from '@core/domain/shared/money';
 import { Ok, type Result } from '@core/domain/shared/result';
@@ -56,7 +57,7 @@ export class GetCartSummaryUseCase {
   constructor(
     private readonly products: ProductReader,
     private readonly flavors: FlavorReader,
-    private readonly deliveryPolicy: DeliveryPolicy,
+    private readonly delivery: DeliveryPolicySource,
   ) {}
 
   async execute(input: GetCartSummaryInput): Promise<Result<CartSummaryDTO, DomainError>> {
@@ -96,10 +97,11 @@ export class GetCartSummaryUseCase {
       (total, line) => total.plus(Money.of(line.subtotal)),
       Money.zero(),
     );
-    const deliveryFee = this.deliveryPolicy.feeFor(method, subtotal);
+    const policy = await this.delivery.current();
+    const deliveryFee = policy.feeFor(method, subtotal);
     const total = subtotal.plus(deliveryFee);
     const missing = method === 'delivery'
-      ? this.deliveryPolicy.amountMissingForFreeDelivery(subtotal)
+      ? policy.amountMissingForFreeDelivery(subtotal)
       : null;
 
     return Ok({

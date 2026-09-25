@@ -24,6 +24,7 @@ import {
 } from './persistence/prisma/identity.repository';
 import { PrismaSeasonRepository } from './persistence/prisma/season.repository';
 import { PrismaProductImageRepository } from './persistence/prisma/product-image.repository';
+import { PrismaDeliverySettingsRepository } from './persistence/prisma/delivery-settings.repository';
 import { PrismaTransactionRunner } from './persistence/prisma/client';
 
 import { SystemClock } from './system/clock';
@@ -59,6 +60,11 @@ import {
 
 import { PlaceOrderUseCase } from '@core/application/ordering/place-order.use-case';
 import { GetCartSummaryUseCase } from '@core/application/ordering/get-cart-summary.use-case';
+import {
+  GetDeliverySettingsUseCase,
+  SaveDeliverySettingsUseCase,
+  StoredDeliveryPolicy,
+} from '@core/application/ordering/delivery-settings.use-cases';
 import { ChangeOrderStatusUseCase } from '@core/application/ordering/change-order-status.use-case';
 import {
   GetOrderByCodeUseCase,
@@ -107,6 +113,7 @@ function build() {
   const adminUsers = new PrismaAdminUserRepository();
   const sessions = new PrismaSessionRepository();
   const seasons = new PrismaSeasonRepository();
+  const deliverySettings = new PrismaDeliverySettingsRepository();
   const transactions = new PrismaTransactionRunner();
 
   const clock = new SystemClock();
@@ -114,15 +121,15 @@ function build() {
   const hasher = new ScryptPasswordHasher();
   const payments = createPaymentGateway();
 
-  const deliveryPolicy = DeliveryPolicy.of(
-    settings.DELIVERY_FEE_COP,
-    settings.FREE_DELIVERY_THRESHOLD_COP,
+  // La del panel si la hay; si no, la del .env.
+  const deliveryPolicy = new StoredDeliveryPolicy(
+    deliverySettings,
+    DeliveryPolicy.of(settings.DELIVERY_FEE_COP, settings.FREE_DELIVERY_THRESHOLD_COP),
   );
 
   // ── Casos de uso ─────────────────────────────────────────────────────
   return {
     config: settings,
-    deliveryPolicy,
     paymentMethod: payments.method,
 
     catalog: {
@@ -159,6 +166,8 @@ function build() {
       list: new ListOrdersUseCase(orders),
       changeStatus: new ChangeOrderStatusUseCase(orders, clock),
       salesSummary: new GetSalesSummaryUseCase(orders, clock),
+      deliverySettings: new GetDeliverySettingsUseCase(deliveryPolicy),
+      saveDeliverySettings: new SaveDeliverySettingsUseCase(deliverySettings),
     },
 
     branding: {

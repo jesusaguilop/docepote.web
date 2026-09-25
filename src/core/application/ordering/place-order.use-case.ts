@@ -7,7 +7,8 @@
  *  1. Los precios se releen del catálogo. Lo que manda el cliente es solo
  *     "qué producto y cuántos"; cuánto cuesta lo decide el servidor.
  *  2. Se verifica disponibilidad real contra el inventario del momento.
- *  3. El costo de domicilio lo calcula `DeliveryPolicy`, no el formulario.
+ *  3. El costo de domicilio lo calcula la `DeliveryPolicy` vigente, no el
+ *     formulario.
  *  4. Todo se escribe dentro de una transacción: o queda el pedido con su
  *     stock descontado, o no queda nada.
  *  5. El cobro se delega al `PaymentGateway` inyectado, así que este código
@@ -18,10 +19,7 @@ import { Order, type PaymentMethod } from '@core/domain/ordering/order';
 import { OrderLine } from '@core/domain/ordering/order-line';
 import { OrderCode } from '@core/domain/ordering/order-code';
 import { Customer, type CustomerInput } from '@core/domain/ordering/customer';
-import {
-  parseFulfillmentMethod,
-  type DeliveryPolicy,
-} from '@core/domain/ordering/fulfillment';
+import { parseFulfillmentMethod } from '@core/domain/ordering/fulfillment';
 import { Cart, type CartItem } from '@core/domain/ordering/cart';
 import { Quantity } from '@core/domain/shared/quantity';
 import type { OrderRepository } from '@core/domain/ordering/order.repository';
@@ -38,6 +36,7 @@ import type { Clock } from '../ports/clock';
 import type { IdGenerator } from '../ports/id-generator';
 import type { PaymentGateway, PaymentInstruction } from '../ports/payment-gateway';
 import type { TransactionRunner } from '../ports/transaction-runner';
+import type { DeliveryPolicySource } from './delivery-settings.use-cases';
 
 export interface PlaceOrderInput {
   readonly items: readonly CartItem[];
@@ -57,7 +56,7 @@ export class PlaceOrderUseCase {
   constructor(
     private readonly orders: OrderRepository,
     private readonly products: ProductRepository,
-    private readonly deliveryPolicy: DeliveryPolicy,
+    private readonly delivery: DeliveryPolicySource,
     private readonly payments: PaymentGateway,
     private readonly transactions: TransactionRunner,
     private readonly clock: Clock,
@@ -116,7 +115,7 @@ export class PlaceOrderUseCase {
         customer,
         fulfillmentMethod: method,
         lines,
-        deliveryPolicy: this.deliveryPolicy,
+        deliveryPolicy: await this.delivery.current(),
         paymentMethod: this.payments.method as PaymentMethod,
         now,
       });

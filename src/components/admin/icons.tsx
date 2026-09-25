@@ -155,3 +155,14 @@ export function EyeOffIcon({ className }: IconProps) {
     </svg>
   );
 }
+
+export function DeliveryIcon({ className }: IconProps) {
+  return (
+    <svg {...base} className={className}>
+      <path d="M2.5 6.5h10.5v9.5H2.5z" />
+      <path d="M13 9.5h4l3.5 3.5v3H13z" />
+      <circle cx="6.5" cy="17.5" r="1.8" />
+      <circle cx="16.5" cy="17.5" r="1.8" />
+    </svg>
+  );
+}

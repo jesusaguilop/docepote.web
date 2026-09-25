@@ -115,8 +115,8 @@ Todo se controla desde el `.env` (ver `.env.example`). Lo más útil:
 | Variable                      | Para qué                                    |
 | ----------------------------- | ------------------------------------------- |
 | `WHATSAPP_NUMBER` | Número que recibe los pedidos               |
-| `DELIVERY_FEE_COP`            | Costo del domicilio                         |
-| `FREE_DELIVERY_THRESHOLD_COP` | Desde cuánto el domicilio va gratis         |
+| `DELIVERY_FEE_COP`            | Costo del domicilio de fábrica (se cambia en el panel, en Domicilio) |
+| `FREE_DELIVERY_THRESHOLD_COP` | Desde cuánto va gratis, de fábrica (se cambia en el panel) |
 | `PAYMENT_GATEWAY`             | `whatsapp` o `wompi`                        |
 
 La configuración se valida al arrancar: si falta algo o viene mal, el proceso

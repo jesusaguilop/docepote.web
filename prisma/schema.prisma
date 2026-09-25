@@ -241,3 +241,15 @@ model ProductImage {
 
   @@index([productId, position])
 }
+
+/// Ajustes de la tienda que se cambian desde el panel, sin redesplegar.
+/// Hay una sola fila, con id "store". Si no existe, mandan los valores del
+/// .env (DELIVERY_FEE_COP y FREE_DELIVERY_THRESHOLD_COP).
+model StoreSettings {
+  id                    String   @id @default("store")
+  /// Costo del domicilio en pesos.
+  deliveryFee           Int
+  /// Desde qué subtotal el domicilio va gratis. 0 = nunca va gratis.
+  freeDeliveryThreshold Int
+  updatedAt             DateTime @updatedAt
+}

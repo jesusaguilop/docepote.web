@@ -8,6 +8,7 @@ import { logout } from '@/app/actions/admin';
 import { cn } from '@/lib/cn';
 import {
   DashboardIcon,
+  DeliveryIcon,
   JarMenuIcon,
   LogoutIcon,
   OrdersIcon,
@@ -19,6 +20,7 @@ const NAV = [
   { href: '/admin', label: 'Resumen', Icon: DashboardIcon },
   { href: '/admin/pedidos', label: 'Pedidos', Icon: OrdersIcon },
   { href: '/admin/productos', label: 'Catálogo', Icon: JarMenuIcon },
+  { href: '/admin/domicilio', label: 'Domicilio', Icon: DeliveryIcon },
   { href: '/admin/apariencia', label: 'Apariencia', Icon: PaletteIcon },
 ];
 
