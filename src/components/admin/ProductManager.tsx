@@ -71,14 +71,9 @@ export function ProductManager({
       setConfirmingDelete(null);
 
       if (!result.ok) {
-        // Un producto con pedidos históricos no se puede borrar: la relación
-        // en la base lo impide para no romper esos pedidos. Se sugiere ocultarlo.
-        notify(
-          result.code === 'UNEXPECTED'
-            ? 'Ese producto ya tiene pedidos, así que no se puede borrar. Ocúltalo en su lugar.'
-            : result.error,
-          'error',
-        );
+        // Si tiene pedidos, el mensaje del servidor ya lo dice y sugiere
+        // ocultarlo; cualquier otro fallo llega con su propio motivo.
+        notify(result.error, 'error');
         return;
       }
 

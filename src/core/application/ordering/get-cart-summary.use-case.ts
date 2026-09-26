@@ -100,9 +100,10 @@ export class GetCartSummaryUseCase {
     const policy = await this.delivery.current();
     const deliveryFee = policy.feeFor(method, subtotal);
     const total = subtotal.plus(deliveryFee);
-    const missing = method === 'delivery'
-      ? policy.amountMissingForFreeDelivery(subtotal)
-      : null;
+    // Se calcula aunque el cliente todavía no haya elegido domicilio: el
+    // carrito lo usa para animar a completar el pedido, y ahí aún no se sabe
+    // cómo lo va a recibir. El checkout decide si mostrarlo.
+    const missing = policy.amountMissingForFreeDelivery(subtotal);
 
     return Ok({
       lines,

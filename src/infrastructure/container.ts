@@ -164,7 +164,7 @@ function build() {
       cartSummary: new GetCartSummaryUseCase(products, flavors, deliveryPolicy),
       getByCode: new GetOrderByCodeUseCase(orders),
       list: new ListOrdersUseCase(orders),
-      changeStatus: new ChangeOrderStatusUseCase(orders, clock),
+      changeStatus: new ChangeOrderStatusUseCase(orders, products, transactions, clock),
       salesSummary: new GetSalesSummaryUseCase(orders, clock),
       deliverySettings: new GetDeliverySettingsUseCase(deliveryPolicy),
       saveDeliverySettings: new SaveDeliverySettingsUseCase(deliverySettings),

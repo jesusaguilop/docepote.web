@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import { container } from '@infra/container';
 import { readSessionCookie } from '@infra/auth/session-cookie';
 import type { AuthenticatedAdmin } from '@core/application/identity/authenticate.use-case';
-import { UnauthorizedError } from '@core/domain/shared/errors';
 
 /**
  * Guardia del panel.
@@ -25,14 +24,18 @@ export async function requireAdmin(): Promise<AuthenticatedAdmin> {
 }
 
 /**
- * Igual que `requireAdmin`, pero para Server Actions: en vez de redirigir
- * lanza, para que el `guard()` de la acción lo convierta en un error legible.
+ * Igual que `requireAdmin`, pero para Server Actions.
+ *
+ * Antes lanzaba un error y el panel mostraba "Tu sesión expiró" en un aviso
+ * que se iba solo, sin llevar a ningún lado: se seguía apretando botones que
+ * fallaban. Ahora manda directo al login, que explica qué pasó. `guard()`
+ * deja pasar la redirección en vez de tragársela.
  */
 export async function requireAdminForAction(): Promise<AuthenticatedAdmin> {
   const result = await container().identity.authenticate.execute(await readSessionCookie());
 
   if (!result.ok) {
-    throw new UnauthorizedError('Tu sesión expiró. Vuelve a iniciar sesión.');
+    redirect('/admin/login?expirada=1');
   }
 
   return result.value;

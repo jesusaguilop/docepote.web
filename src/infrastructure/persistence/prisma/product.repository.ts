@@ -1,6 +1,7 @@
 /** Implementación del catálogo sobre Prisma. */
 
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { ConflictError } from '@core/domain/shared/errors';
 import type { Product } from '@core/domain/catalog/product';
 import type {
   ProductRepository,
@@ -60,7 +61,40 @@ export class PrismaProductRepository implements ProductRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await db().product.delete({ where: { id } });
+    try {
+      await db().product.delete({ where: { id } });
+    } catch (error) {
+      // P2003: la base no lo deja ir porque hay pedidos que lo nombran. Es el
+      // único fallo que se traduce: cualquier otro (base dormida, red) debe
+      // llegar como lo que es y no disfrazarse de "tiene pedidos".
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
+        throw new ConflictError(
+          'Este producto ya tiene pedidos, así que no se puede borrar. Ocúltalo para que no salga en la tienda.',
+          { motivo: 'tiene-pedidos' },
+        );
+      }
+      throw error;
+    }
+  }
+
+  async reserveStock(id: string, quantity: number): Promise<boolean> {
+    // La condición va en el WHERE: Postgres bloquea la fila y vuelve a
+    // evaluarla, así que el segundo de dos pedidos simultáneos ya no la cumple.
+    const { count } = await db().product.updateMany({
+      where: { id, stock: { gte: quantity } },
+      data: { stock: { decrement: quantity } },
+    });
+    if (count > 0) return true;
+
+    const row = await db().product.findUnique({ where: { id }, select: { stock: true } });
+    return row !== null && row.stock === null;
+  }
+
+  async releaseStock(id: string, quantity: number): Promise<void> {
+    await db().product.updateMany({
+      where: { id, stock: { not: null } },
+      data: { stock: { increment: quantity } },
+    });
   }
 
   async existsWithSlug(slug: Slug, excludingId?: string): Promise<boolean> {

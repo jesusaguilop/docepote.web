@@ -6,6 +6,7 @@
  * serializable, que es lo que el componente de React puede recibir.
  */
 
+import { unstable_rethrow } from 'next/navigation';
 import { isDomainError, type DomainErrorCode } from '@core/domain/shared/errors';
 import type { Result } from '@core/domain/shared/result';
 
@@ -40,6 +41,9 @@ export async function guard<T>(work: () => Promise<Result<T>>): Promise<ActionRe
   try {
     return fromResult(await work());
   } catch (error) {
+    // `redirect()` y `notFound()` viajan como excepciones: hay que dejarlas
+    // seguir para que Next navegue.
+    unstable_rethrow(error);
     if (isDomainError(error)) {
       return { ok: false, error: error.message, code: error.code, details: error.details };
     }

@@ -14,7 +14,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { AnimatePresence, motion } from 'motion/react';
 import { useCart } from './cart-context';
-import { useToast } from '@/components/ui/Toast';
 import { getCartSummary } from '@/app/actions/cart';
 import { placeOrder } from '@/app/actions/orders';
 import { rememberPaymentHandoff } from './PaymentHandoff';
@@ -23,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { useTranslation } from '@/lib/i18n/context';
 import { cn } from '@/lib/cn';
 import type { CartSummaryDTO } from '@core/application/ordering/get-cart-summary.use-case';
+import type { ActionResult } from '@/lib/action-result';
 import type { FulfillmentMethod } from '@core/domain/ordering/fulfillment';
 
 interface FormState {
@@ -34,11 +34,37 @@ interface FormState {
 
 const EMPTY_FORM: FormState = { name: '', phone: '', address: '', notes: '' };
 
+/** Orden en pantalla: el primero con error es al que se lleva al cliente. */
+const FIELD_ORDER = ['name', 'phone', 'address', 'notes'] as const;
+type FieldName = (typeof FIELD_ORDER)[number];
+
+function isFieldName(value: string | undefined): value is FieldName {
+  return (FIELD_ORDER as readonly string[]).includes(value ?? '');
+}
+
+/**
+ * Lleva al cliente al primer campo con error.
+ *
+ * En el celular el botón de confirmar vive en una barra fija abajo y los
+ * campos quedan muy arriba: sin esto, tocar "Confirmar" con un dato mal
+ * escrito no hacía nada visible.
+ */
+function focusFirstInvalid(errors: Readonly<Record<string, string>>): void {
+  const first = FIELD_ORDER.find((field) => errors[field]);
+  if (!first) return;
+  requestAnimationFrame(() => {
+    const input = document.getElementById(first);
+    if (!input) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    input.scrollIntoView({ block: 'center', behavior: reduceMotion ? 'auto' : 'smooth' });
+    input.focus({ preventScroll: true });
+  });
+}
+
 export function CheckoutForm() {
   const router = useRouter();
   const { items, totalItems, clear, remove, ready } = useCart();
-  const { notify } = useToast();
-  const { t, fill } = useTranslation();
+  const { t, fill, locale } = useTranslation();
 
   const methods: { value: FulfillmentMethod; label: string; hint: string }[] = [
     { value: 'pickup', label: t.checkout.recojo, hint: t.checkout.recojoHint },
@@ -53,6 +79,8 @@ export function CheckoutForm() {
   const [summaryError, setSummaryError] = useState<string | null>(null);
   /** Cambia para forzar otro intento cuando el resumen falla. */
   const [attempt, setAttempt] = useState(0);
+  /** Cambia para pedir el resumen de nuevo (precio o stock cambiaron). */
+  const [refreshKey, setRefreshKey] = useState(0);
   const [isSubmitting, startSubmit] = useTransition();
 
   // Recalcula el resumen ante cualquier cambio que afecte el total.
@@ -95,7 +123,7 @@ export function CheckoutForm() {
       cancelled = true;
       clearTimeout(retry);
     };
-  }, [items, method, ready, remove, attempt]);
+  }, [items, method, ready, remove, attempt, refreshKey]);
 
   const update = (field: keyof FormState) => (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -124,14 +152,59 @@ export function CheckoutForm() {
     }
 
     setFieldErrors(errors);
+    focusFirstInvalid(errors);
     return Object.keys(errors).length === 0;
+  };
+
+  /**
+   * Traduce un rechazo del servidor al idioma de la tienda.
+   *
+   * Los mensajes del dominio están en español. Para los casos que el cliente
+   * puede arreglar se usa el texto del diccionario; el del servidor solo se
+   * muestra tal cual en español.
+   */
+  const handleRejection = (result: Extract<ActionResult<unknown>, { ok: false }>) => {
+    const field = result.details.campo;
+
+    if (isFieldName(field)) {
+      const messages: Record<FieldName, string> = {
+        name: t.checkout.errorNombre,
+        phone: t.checkout.errorCelular,
+        address: t.checkout.errorDireccion,
+        notes: t.checkout.errorNotas,
+      };
+      const errors = { [field]: locale === 'es' ? result.error : messages[field] };
+      setFieldErrors(errors);
+      focusFirstInvalid(errors);
+      return;
+    }
+
+    if (result.details.motivo === 'precio') {
+      setFormError(t.checkout.precioCambio);
+      setRefreshKey((n) => n + 1);
+      return;
+    }
+
+    if (result.code === 'UNAVAILABLE') {
+      setFormError(
+        result.details.productos
+          ? fill(t.checkout.agotado, { productos: result.details.productos })
+          : t.checkout.revisaCarrito,
+      );
+      setRefreshKey((n) => n + 1);
+      return;
+    }
+
+    setFormError(
+      locale === 'es' && result.code !== 'UNEXPECTED' ? result.error : t.checkout.errorGeneral,
+    );
   };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     setFormError(null);
 
-    if (!validateLocally()) return;
+    if (!validateLocally() || !summary) return;
 
     startSubmit(async () => {
       const result = await placeOrder(items, {
@@ -140,14 +213,13 @@ export function CheckoutForm() {
         address: form.address,
         notes: form.notes,
         fulfillmentMethod: method,
+        expectedTotal: summary.total,
       });
 
+      // Sin aviso flotante: el error ya sale junto al botón, y repetirlo
+      // tapaba la barra de confirmar en el celular.
       if (!result.ok) {
-        setFormError(result.error);
-        // El dominio marca el campo culpable cuando puede identificarlo.
-        const field = result.details.campo;
-        if (field) setFieldErrors({ [field]: result.error });
-        notify(result.error, 'error');
+        handleRejection(result);
         return;
       }
 
@@ -184,7 +256,16 @@ export function CheckoutForm() {
     : summary?.hasBlockingIssues
       ? t.checkout.revisaCarrito
       : null;
-  const alert = formError ?? blockedReason;
+  const hasFieldErrors = Object.keys(fieldErrors).length > 0;
+  const alert = formError ?? (hasFieldErrors ? t.checkout.revisaDatos : null) ?? blockedReason;
+
+  const deliveryLabel = !summary
+    ? ''
+    : method === 'pickup'
+      ? t.entrega.sinCosto
+      : summary.freeDelivery
+        ? t.entrega.gratis
+        : summary.deliveryFeeFormatted;
 
   return (
     <form
@@ -354,11 +435,11 @@ export function CheckoutForm() {
               <Row label={t.checkout.subtotal} value={summary.subtotalFormatted} />
               <Row
                 label={method === 'delivery' ? t.checkout.domicilio : t.checkout.recojo}
-                value={summary.deliveryFeeFormatted}
+                value={deliveryLabel}
                 highlight={summary.freeDelivery}
               />
 
-              {summary.missingForFreeDeliveryFormatted && (
+              {method === 'delivery' && summary.missingForFreeDeliveryFormatted && (
                 <p className="rounded bg-green-deep/8 px-3 py-2 text-[0.82rem] text-green-deep">
                   {fill(t.checkout.agregaMas, {
                     monto: summary.missingForFreeDeliveryFormatted,

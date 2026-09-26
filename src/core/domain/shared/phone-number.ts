@@ -24,10 +24,12 @@ export class PhoneNumber {
       : digits;
 
     if (national.length !== MOBILE_LENGTH) {
-      throw new ValidationError('El celular debe tener 10 dígitos. Ejemplo: 318 017 3770.');
+      throw new ValidationError('El celular debe tener 10 dígitos. Ejemplo: 318 017 3770.', {
+        campo: 'phone',
+      });
     }
     if (!national.startsWith('3')) {
-      throw new ValidationError('El celular colombiano debe empezar por 3.');
+      throw new ValidationError('El celular colombiano debe empezar por 3.', { campo: 'phone' });
     }
 
     return new PhoneNumber(`${COLOMBIA_CODE}${national}`);

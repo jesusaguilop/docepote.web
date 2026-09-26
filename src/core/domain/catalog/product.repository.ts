@@ -33,6 +33,14 @@ export interface ProductWriter {
   save(product: Product): Promise<void>;
   delete(id: string): Promise<void>;
   existsWithSlug(slug: Slug, excludingId?: string): Promise<boolean>;
+  /**
+   * Descuenta unidades en un solo paso atómico: "si quedan al menos N, resta
+   * N". Así dos pedidos simultáneos no pueden vender la misma última unidad.
+   * `false` si ya no alcanza. Un producto sin control de stock siempre alcanza.
+   */
+  reserveStock(id: string, quantity: number): Promise<boolean>;
+  /** Devuelve unidades al inventario (pedido cancelado). Sin control de stock, no hace nada. */
+  releaseStock(id: string, quantity: number): Promise<void>;
 }
 
 export interface ProductRepository extends ProductReader, ProductWriter {}

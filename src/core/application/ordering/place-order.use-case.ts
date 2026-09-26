@@ -25,6 +25,7 @@ import { Quantity } from '@core/domain/shared/quantity';
 import type { OrderRepository } from '@core/domain/ordering/order.repository';
 import type { ProductRepository } from '@core/domain/catalog/product.repository';
 import {
+  ConflictError,
   UnavailableError,
   ValidationError,
   isDomainError,
@@ -42,6 +43,12 @@ export interface PlaceOrderInput {
   readonly items: readonly CartItem[];
   readonly customer: CustomerInput;
   readonly fulfillmentMethod: string;
+  /**
+   * El total que el cliente vio en el resumen. Si al confirmar no coincide
+   * —cambió un precio o la tarifa de domicilio mientras pedía— el pedido no
+   * se crea y se le pide revisar: nadie debería pagar un total que no vio.
+   */
+  readonly expectedTotal?: number;
 }
 
 export interface PlaceOrderOutput {
@@ -120,14 +127,30 @@ export class PlaceOrderUseCase {
         now,
       });
 
-      // Pedido y descuento de inventario viajan juntos o no viajan.
+      if (input.expectedTotal !== undefined && input.expectedTotal !== order.total.amount) {
+        return Err(
+          new ConflictError(
+            `El total cambió mientras pedías: ahora es ${order.total.format()}. Revísalo y confirma otra vez.`,
+            { motivo: 'precio', total: String(order.total.amount) },
+          ),
+        );
+      }
+
+      // Pedido y descuento de inventario viajan juntos o no viajan. El
+      // descuento es atómico: la revisión de arriba es con el stock leído hace
+      // un momento, y otro cliente pudo llevarse las últimas unidades entretanto.
+      // Si una línea ya no alcanza, la excepción deshace toda la transacción.
       await this.transactions.run(async () => {
-        await this.orders.save(order);
         for (const line of order.lines) {
-          const product = byId.get(line.productId);
-          if (!product || product.stock === null) continue;
-          await this.products.save(product.withStockReduced(line.quantity.value));
+          const reserved = await this.products.reserveStock(line.productId, line.quantity.value);
+          if (!reserved) {
+            throw new UnavailableError(
+              `Se nos acabaron algunas cosas mientras armabas el pedido: ${line.productName}.`,
+              { productos: line.productName },
+            );
+          }
         }
+        await this.orders.save(order);
       });
 
       const payment = await this.payments.prepare(order);

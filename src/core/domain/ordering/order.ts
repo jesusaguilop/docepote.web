@@ -13,7 +13,7 @@ import type { Customer } from './customer';
 import type { OrderLine } from './order-line';
 import { OrderCode } from './order-code';
 import type { DeliveryPolicy, FulfillmentMethod } from './fulfillment';
-import { canTransition, type OrderStatus } from './order-status';
+import { ORDER_STATUS_LABELS, canTransition, type OrderStatus } from './order-status';
 
 export const PAYMENT_METHODS = ['whatsapp', 'wompi'] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
@@ -122,7 +122,7 @@ export class Order {
     if (next === this.status) return this;
     if (!canTransition(this.status, next)) {
       throw new ConflictError(
-        `Un pedido "${this.status}" no puede pasar a "${next}".`,
+        `Un pedido ${ORDER_STATUS_LABELS[this.status].toLowerCase()} no puede pasar a ${ORDER_STATUS_LABELS[next].toLowerCase()}. Recarga la página: puede que alguien más ya lo haya cambiado.`,
         { estadoActual: this.status, estadoSolicitado: next },
       );
     }

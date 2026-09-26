@@ -19,6 +19,7 @@ export const pt: Dictionary = {
     carrito: 'Carrinho',
     abrirMenu: 'Abrir menu',
     cerrarMenu: 'Fechar menu',
+    cerrarAviso: 'Fechar aviso',
     pedirWhatsApp: 'Pedir pelo WhatsApp',
     inicio: 'Início',
     idioma: 'Idioma',
@@ -156,6 +157,11 @@ export const pt: Dictionary = {
     errorDireccion: 'Escreva o endereço completo, com o bairro.',
     errorResumen: 'Não conseguimos calcular seu pedido. Verifique sua conexão e tente de novo.',
     revisaCarrito: 'Tem algo no seu carrinho que não conseguimos mais preparar. Abra o carrinho e ajuste as quantidades.',
+    revisaDatos: 'Confira os dados marcados em vermelho.',
+    errorNotas: 'As observações estão longas demais: no máximo 400 caracteres.',
+    agotado: 'Acabaram alguns itens enquanto você montava o pedido: {productos}. Ajuste o carrinho e confirme de novo.',
+    precioCambio: 'Os preços mudaram enquanto você fazia o pedido. Confira o novo total e confirme de novo.',
+    errorGeneral: 'Não conseguimos registrar seu pedido. Tente de novo em um instante.',
   },
 
   pedido: {

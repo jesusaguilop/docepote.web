@@ -94,6 +94,8 @@ export function SeasonManager({ seasons }: { seasons: SeasonDTO[] }) {
   const { notify } = useToast();
   const [isPending, startTransition] = useTransition();
   const [draft, setDraft] = useState<Borrador | null>(null);
+  /** Temporada que espera confirmación para borrarse: no se puede deshacer. */
+  const [confirmingDelete, setConfirmingDelete] = useState<string | null>(null);
 
   const activa = seasons.find((season) => season.active) ?? null;
 
@@ -198,19 +200,51 @@ export function SeasonManager({ seasons }: { seasons: SeasonDTO[] }) {
                   >
                     Editar
                   </button>
-                  {!season.active && (
+                  {!season.active && confirmingDelete !== season.id && (
                     <button
                       type="button"
                       disabled={isPending}
-                      onClick={() =>
-                        run(() => deleteSeason(season.id), `Se borró ${season.name}.`)
-                      }
+                      onClick={() => setConfirmingDelete(season.id)}
                       className="rounded-sm px-3.5 py-2 font-display text-[0.82rem] font-semibold text-ink-soft transition-colors hover:text-berry disabled:opacity-60"
                     >
                       Borrar
                     </button>
                   )}
                 </div>
+
+                {confirmingDelete === season.id && (
+                  <div
+                    role="group"
+                    aria-label={`Confirmar borrado de ${season.name}`}
+                    className="mt-3 rounded-md bg-berry/10 px-4 py-3"
+                  >
+                    <p className="text-[0.88rem] text-berry">
+                      ¿Borrar &ldquo;{season.name}&rdquo; con sus colores y su mascota? No se puede
+                      deshacer.
+                    </p>
+                    <div className="mt-2.5 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        autoFocus
+                        onClick={() => {
+                          setConfirmingDelete(null);
+                          run(() => deleteSeason(season.id), `Se borró ${season.name}.`);
+                        }}
+                        className="rounded-sm bg-berry px-3.5 py-2 font-display text-[0.82rem] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60"
+                      >
+                        Sí, borrar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setConfirmingDelete(null)}
+                        className="rounded-sm border border-kraft-line bg-white px-3.5 py-2 font-display text-[0.82rem] font-semibold transition-colors hover:border-ink"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

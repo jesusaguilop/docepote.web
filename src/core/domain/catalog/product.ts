@@ -208,6 +208,12 @@ export class Product {
     return new Product({ ...this.toProps(), stock: this.stock - quantity });
   }
 
+  /** Devuelve unidades al inventario, por ejemplo al cancelar un pedido. */
+  withStockRestored(quantity: number): Product {
+    if (this.stock === null) return this;
+    return new Product({ ...this.toProps(), stock: this.stock + quantity });
+  }
+
   withActive(active: boolean): Product {
     return new Product({ ...this.toProps(), active });
   }

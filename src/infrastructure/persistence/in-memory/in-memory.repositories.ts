@@ -63,6 +63,19 @@ export class InMemoryProductRepository implements ProductRepository {
     this.items.set(product.id, product);
   }
 
+  async reserveStock(id: string, quantity: number): Promise<boolean> {
+    const product = this.items.get(id);
+    if (!product) return false;
+    if (!product.canFulfill(quantity)) return false;
+    this.items.set(id, product.withStockReduced(quantity));
+    return true;
+  }
+
+  async releaseStock(id: string, quantity: number): Promise<void> {
+    const product = this.items.get(id);
+    if (product) this.items.set(id, product.withStockRestored(quantity));
+  }
+
   async delete(id: string): Promise<void> {
     this.items.delete(id);
   }

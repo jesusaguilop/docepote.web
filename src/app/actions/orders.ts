@@ -13,6 +13,8 @@ export interface CheckoutFormData {
   readonly address: string;
   readonly notes: string;
   readonly fulfillmentMethod: string;
+  /** El total que el cliente tenía en pantalla al confirmar. */
+  readonly expectedTotal?: number;
 }
 
 /**
@@ -30,6 +32,7 @@ export async function placeOrder(
     container().ordering.placeOrder.execute({
       items,
       fulfillmentMethod: form.fulfillmentMethod,
+      expectedTotal: form.expectedTotal,
       customer: {
         name: form.name,
         phone: form.phone,

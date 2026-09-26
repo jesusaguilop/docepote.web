@@ -90,8 +90,7 @@ export class PrismaOrderRepository implements OrderRepository {
   async summarize(now: Date): Promise<SalesSummary> {
     const client = db();
 
-    const startOfToday = new Date(now);
-    startOfToday.setHours(0, 0, 0, 0);
+    const startOfToday = startOfBusinessDay(now);
 
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
@@ -129,6 +128,21 @@ export class PrismaOrderRepository implements OrderRepository {
       })),
     };
   }
+}
+
+/**
+ * Colombia está en UTC−5 todo el año (no cambia de hora). El servidor de
+ * Vercel corre en UTC: con `setHours(0)` el "hoy" del tablero empezaba a las
+ * 7 p. m. del día anterior y los pedidos de la noche se sumaban al día
+ * siguiente.
+ */
+const BUSINESS_UTC_OFFSET_MS = -5 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Medianoche de hoy en Valledupar, expresada como instante UTC. */
+export function startOfBusinessDay(now: Date): Date {
+  const local = now.getTime() + BUSINESS_UTC_OFFSET_MS;
+  return new Date(Math.floor(local / DAY_MS) * DAY_MS - BUSINESS_UTC_OFFSET_MS);
 }
 
 type RevenueRow = {

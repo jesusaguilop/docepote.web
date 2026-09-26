@@ -7,7 +7,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ expirada?: string }>;
+}) {
+  // Llega con `?expirada=1` cuando una acción del panel encontró la sesión vencida.
+  const expired = (await searchParams).expirada === '1';
+
   return (
     <main className="texture-cats relative flex min-h-dvh items-center justify-center px-6 py-16">
       <div className="absolute inset-0 bg-green-deep/88" aria-hidden />
@@ -30,6 +37,15 @@ export default function LoginPage() {
             Entra para gestionar el catálogo y los pedidos.
           </p>
         </div>
+
+        {expired && (
+          <p
+            className="mb-4 rounded-md bg-paper px-4 py-3 text-center text-[0.92rem] font-semibold text-caramel shadow-lg"
+            role="status"
+          >
+            Tu sesión se cerró por seguridad. Vuelve a entrar para seguir.
+          </p>
+        )}
 
         <div className="rounded-md bg-paper p-7 shadow-2xl">
           <LoginForm />

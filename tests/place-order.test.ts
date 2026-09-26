@@ -10,6 +10,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { PlaceOrderUseCase } from '@core/application/ordering/place-order.use-case';
+import { ChangeOrderStatusUseCase } from '@core/application/ordering/change-order-status.use-case';
+import { startOfBusinessDay } from '@infra/persistence/prisma/order.repository';
 import { fixedDeliveryPolicy } from '@core/application/ordering/delivery-settings.use-cases';
 import { Product } from '@core/domain/catalog/product';
 import { JarArt } from '@core/domain/catalog/jar-art';
@@ -260,5 +262,151 @@ describe('PlaceOrderUseCase', () => {
     }
 
     expect(codes.size).toBe(12);
+  });
+});
+
+describe('PlaceOrderUseCase — precios y stock al confirmar', () => {
+  let products: InMemoryProductRepository;
+  let orders: InMemoryOrderRepository;
+  let useCase: PlaceOrderUseCase;
+
+  beforeEach(() => {
+    products = new InMemoryProductRepository([buildProduct('b', 4500, 2)]);
+    orders = new InMemoryOrderRepository();
+    useCase = new PlaceOrderUseCase(
+      orders,
+      products,
+      fixedDeliveryPolicy(DeliveryPolicy.of(5000, 60000)),
+      new FakeGateway(),
+      new ImmediateTransactionRunner(),
+      new FixedClock(new Date('2026-09-04T15:00:00Z')),
+      new SequentialIdGenerator('order'),
+    );
+  });
+
+  it('no crea el pedido si el total cambió desde que el cliente lo vio', async () => {
+    const result = await useCase.execute({
+      items: [{ productId: 'b', quantity: 1 }],
+      customer: CUSTOMER,
+      fulfillmentMethod: 'delivery',
+      expectedTotal: 8500, // vio el domicilio a 4.000; ahora cuesta 5.000
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('CONFLICT');
+    expect(result.error.details.motivo).toBe('precio');
+    expect(orders.items.size).toBe(0);
+    expect((await products.findById('b'))?.stock).toBe(2);
+  });
+
+  it('crea el pedido cuando el total coincide con el que vio', async () => {
+    const result = await useCase.execute({
+      items: [{ productId: 'b', quantity: 1 }],
+      customer: CUSTOMER,
+      fulfillmentMethod: 'delivery',
+      expectedTotal: 9500,
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it('si otro cliente se llevó las últimas unidades entretanto, no vende de más', async () => {
+    // Otro pedido descuenta el stock entre la lectura del catálogo y el guardado.
+    const reserve = products.reserveStock.bind(products);
+    let first = true;
+    products.reserveStock = async (id, quantity) => {
+      if (first) {
+        first = false;
+        await reserve(id, 2);
+      }
+      return reserve(id, quantity);
+    };
+
+    const result = await useCase.execute({
+      items: [{ productId: 'b', quantity: 2 }],
+      customer: CUSTOMER,
+      fulfillmentMethod: 'pickup',
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.code).toBe('UNAVAILABLE');
+    expect(orders.items.size).toBe(0);
+    expect((await products.findById('b'))?.stock).toBe(0);
+  });
+
+  it('marca el campo del celular cuando está mal escrito', async () => {
+    const result = await useCase.execute({
+      items: [{ productId: 'b', quantity: 1 }],
+      customer: { ...CUSTOMER, phone: '12345' },
+      fulfillmentMethod: 'pickup',
+    });
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.details.campo).toBe('phone');
+  });
+});
+
+describe('ChangeOrderStatusUseCase', () => {
+  it('al cancelar devuelve al inventario lo que el pedido había descontado', async () => {
+    const products = new InMemoryProductRepository([buildProduct('b', 4500, 5)]);
+    const orders = new InMemoryOrderRepository();
+    const transactions = new ImmediateTransactionRunner();
+    const clock = new FixedClock(new Date('2026-09-04T15:00:00Z'));
+
+    const placed = await new PlaceOrderUseCase(
+      orders,
+      products,
+      fixedDeliveryPolicy(DeliveryPolicy.of(5000, 60000)),
+      new FakeGateway(),
+      transactions,
+      clock,
+      new SequentialIdGenerator('order'),
+    ).execute({ items: [{ productId: 'b', quantity: 3 }], customer: CUSTOMER, fulfillmentMethod: 'pickup' });
+    if (!placed.ok) throw placed.error;
+    expect((await products.findById('b'))?.stock).toBe(2);
+
+    const change = new ChangeOrderStatusUseCase(orders, products, transactions, clock);
+
+    const cancelled = await change.execute({ orderId: placed.value.order.id, status: 'cancelled' });
+    expect(cancelled.ok).toBe(true);
+    expect((await products.findById('b'))?.stock).toBe(5);
+  });
+
+  it('explica el rechazo con los nombres de los estados, no con códigos', async () => {
+    const products = new InMemoryProductRepository([buildProduct('b', 4500, null)]);
+    const orders = new InMemoryOrderRepository();
+    const transactions = new ImmediateTransactionRunner();
+    const clock = new FixedClock(new Date('2026-09-04T15:00:00Z'));
+    const placed = await new PlaceOrderUseCase(
+      orders,
+      products,
+      fixedDeliveryPolicy(DeliveryPolicy.of(5000, 60000)),
+      new FakeGateway(),
+      transactions,
+      clock,
+      new SequentialIdGenerator('order'),
+    ).execute({ items: [{ productId: 'b', quantity: 1 }], customer: CUSTOMER, fulfillmentMethod: 'pickup' });
+    if (!placed.ok) throw placed.error;
+
+    const change = new ChangeOrderStatusUseCase(orders, products, transactions, clock);
+    const result = await change.execute({ orderId: placed.value.order.id, status: 'delivered' });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error.message).toContain('pendiente');
+    expect(result.error.message).not.toContain('pending');
+  });
+});
+
+describe('startOfBusinessDay', () => {
+  it('el día empieza a medianoche de Colombia, no de UTC', () => {
+    // 9 p. m. del 4 de septiembre en Valledupar = 02:00 UTC del 5.
+    const night = new Date('2026-09-05T02:00:00Z');
+    expect(startOfBusinessDay(night).toISOString()).toBe('2026-09-04T05:00:00.000Z');
+
+    // 8 a. m. del 5 en Valledupar.
+    const morning = new Date('2026-09-05T13:00:00Z');
+    expect(startOfBusinessDay(morning).toISOString()).toBe('2026-09-05T05:00:00.000Z');
   });
 });

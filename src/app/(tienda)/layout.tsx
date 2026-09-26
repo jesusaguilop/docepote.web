@@ -24,7 +24,7 @@ export default async function StoreLayout({ children }: { children: React.ReactN
   return (
     <TranslationProvider dictionary={t} locale={locale}>
       <CartProvider>
-        <ToastProvider>
+        <ToastProvider closeLabel={t.nav.cerrarAviso}>
           <div className="flex min-h-dvh flex-col">
             <Header whatsappNumber={config.WHATSAPP_NUMBER} />
             <main className="flex-1">{children}</main>

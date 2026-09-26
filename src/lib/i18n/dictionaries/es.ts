@@ -16,6 +16,7 @@ export const es = {
     carrito: 'Carrito',
     abrirMenu: 'Abrir menú',
     cerrarMenu: 'Cerrar menú',
+    cerrarAviso: 'Cerrar aviso',
     pedirWhatsApp: 'Pedir por WhatsApp',
     inicio: 'Inicio',
     idioma: 'Idioma',
@@ -153,6 +154,11 @@ export const es = {
     errorDireccion: 'Escribe la dirección completa, con barrio.',
     errorResumen: 'No pudimos calcular tu pedido. Revisa tu conexión y vuelve a intentarlo.',
     revisaCarrito: 'Hay algo en tu carrito que ya no podemos preparar. Ábrelo y ajusta las cantidades.',
+    revisaDatos: 'Revisa los datos marcados en rojo.',
+    errorNotas: 'Las notas son muy largas: máximo 400 caracteres.',
+    agotado: 'Se nos acabaron algunas cosas mientras armabas el pedido: {productos}. Ajusta el carrito y vuelve a confirmar.',
+    precioCambio: 'Los precios cambiaron mientras pedías. Revisa el nuevo total y confirma otra vez.',
+    errorGeneral: 'No pudimos registrar tu pedido. Intenta de nuevo en un momento.',
   },
 
   pedido: {
